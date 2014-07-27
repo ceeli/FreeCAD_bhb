@@ -57,6 +57,9 @@ def open(filename,skip=None):
     FreeCAD.ActiveDocument = doc
     getConfig()
     read(filename,skip)
+    setView()
+    #volumeTest()
+    #farbImport()
     return doc
 
 def insert(filename,docname,skip=None):
@@ -156,6 +159,8 @@ def read(filename,skip=None):
             objects = ifc.by_type("IfcProduct")
             num_lines = len(objects)
             relations = ifc.by_type("IfcRelAggregates") + ifc.by_type("IfcRelContainedInSpatialStructure") + ifc.by_type("IfcRelVoidsElement")
+            propertyrelations = ifc.by_type("IfcRelDefinesByProperties")
+            materialrelations = ifc.by_type("IfcRelAssociatesMaterial")
             if not objects:
                 print "Error opening IFC file"
                 return 
@@ -166,10 +171,15 @@ def read(filename,skip=None):
                 return
                 
         # processing geometry
+        if DEBUG: print (" ")
+        if DEBUG: print ("------------------ processing geometry--------------------")
         idx = 0
         while True:
             objparentid = []
             if IFCOPENSHELL5:
+                #if DEBUG: print (" ")
+                if DEBUG: print (" ")
+                if DEBUG: print ("------------------Object " + str(idx) + " --------------------")
                 obj = objects[idx]
                 idx += 1
                 objid = int(str(obj).split("=")[0].strip("#"))
@@ -187,7 +197,14 @@ def read(filename,skip=None):
                     elif r.is_a("IfcRelVoidsElement"):
                         if str(obj) == str(getAttr(r,"RelatedOpeningElement")):
                             objparentid.append(int(str(getAttr(r,"RelatingBuildingElement")).split("=")[0].strip("#")))
-                    
+ 
+                
+                # get attributes from the object
+                objectAttributes = getObjectAttributes(objid, objtype, objname)     # Attributes
+                objectPropertySets = getObjectPropertySets(obj, propertyrelations)  # PropertySets
+                objectMaterials = getObjectMaterials(obj, materialrelations)        # Materials
+
+ 
             else:
                 if hasattr(IfcImport, 'GetBrepData'):
                     obj = IfcImport.GetBrepData()  
@@ -223,7 +240,7 @@ def read(filename,skip=None):
                 if useShapes:
                     shape = getShape(obj,objid)
 
-                # walls
+                '''# walls
                 if objtype in ["IfcWallStandardCase","IfcWall"]:
                     nobj = makeWall(objid,shape,n)
 
@@ -242,10 +259,10 @@ def read(filename,skip=None):
                 # furniture
                 elif objtype in ["IfcFurnishingElement"]:
                     nobj = FreeCAD.ActiveDocument.addObject("Part::Feature",n)
-                    nobj.Shape = shape
+                    nobj.Shape = shape'''
                     
                 # sites
-                elif objtype in ["IfcSite"]:
+                if objtype in ["IfcSite"]:
                     nobj = makeSite(objid,shape,n)
                     
                 # floors
@@ -263,11 +280,12 @@ def read(filename,skip=None):
                     nobj = makeSpace(objid,shape,n)
                     
                 elif shape:
-                    # treat as dumb parts
+                    nobj = makeStructure(objid,shape,objtype,n)
+                    '''# treat as dumb parts
                     if DEBUG: print "Fixme: Shape-containing object not handled: ",objid, " ", objtype 
                     nobj = FreeCAD.ActiveDocument.addObject("Part::Feature",n)
                     nobj.Label = n
-                    nobj.Shape = shape
+                    nobj.Shape = shape'''
                     
                 else:
                     # treat as meshes
@@ -282,7 +300,30 @@ def read(filename,skip=None):
                         nobj.Placement = pl
                     else:
                         if DEBUG: print "Error: Skipping object without mesh: ",objid, " ", objtype
-                    
+                        nobj = None  # sonst aendern meine kommenden funktionen wenn ein obj hier rein kommt das letzte nobj !!!
+
+
+                # Add additonal Attributes to nobj
+                if nobj is not None:                
+                  print ("    Add additonal Attributes to the new FreeCAD-Object")
+                  # nobj: die Gefundenen Attribute als Dicionaries (App::PropertyMap) zuweisen
+                  # PropertyMap wird nur von FeaturePython unterstuetzt     
+                  if str(type(nobj)) == "<type 'FeaturePython'>":
+                  # obiges liesse sich auch mit isinstance erreichen, aber wie?!? siehe naechsten zeilen
+                  #if isinstance(nobj,FeaturePython):
+                  #if isinstance(nobj,Part.PartFeature):
+                    print ("      Found a " + str(type(nobj)) + " We are able to add PropertyMaps")
+                    nobj = addObjectAttributes(nobj, objectAttributes)
+                    nobj = addObjectMaterials(nobj, objectMaterials)
+                    nobj = addObjectPropertySets(nobj, objectPropertySets)
+                  else:
+                    try:
+                      print ("      Found: " + str(nobj.Name) + str(type(nobj)) + " It is not possible to add a PropertyMap to this object")
+                      # exception wird ausgeloest wenn objekt kein name hat, diese abfangen !!!
+                    except:
+                      print ("      Found: " + str(type(nobj)) + " It is not possible to add a PropertyMap to this object")
+
+                        
                 # registering object number and parent
                 if objparentid:
                     ifcParents[objid] = []
@@ -300,6 +341,9 @@ def read(filename,skip=None):
 
 
         # processing non-geometry and relationships
+        if DEBUG: print (" ")
+        if DEBUG: print (" ")
+        if DEBUG: print ("------------------ non-geometry and relationships---------")
         parents_temp = dict(ifcParents)
         import ArchCommands
         #print parents_temp
@@ -528,7 +572,7 @@ def makeStructure(entity,shape=None,ifctype=None,name="Structure"):
         if shape:
             # use ifcopenshell
             if isinstance(shape,Part.Shape):
-                body = FreeCAD.ActiveDocument.addObject("Part::Feature",name+"_body")
+                body = FreeCAD.ActiveDocument.addObject("Part::Feature",name+"_FreeCAD_shape_body")
                 body.Shape = shape
             else:
                 body = FreeCAD.ActiveDocument.addObject("Mesh::Feature",name+"_body")
@@ -658,6 +702,11 @@ def getShape(obj,objid):
     import Part
     sh=Part.Shape()
     brep_data = None
+    importallshapsassimpleboxes = False
+    #importallshapsassimpleboxes = True
+    if importallshapsassimpleboxes:
+      sh = Part.makeBox(1,1,1)
+      return sh   
     if IFCOPENSHELL5:
         try:
             if hasattr(IfcImport,"SEW_SHELLS"):
@@ -1016,8 +1065,8 @@ def export(exportList,filename):
         # getting the "Force BREP" flag
         brepflag = False
         if hasattr(obj,"IfcAttributes"):
-            if "FlagForceBrep" in obj.IfcAttributes.keys():
-                if obj.IfcAttributes["FlagForceBrep"] == "True":
+            if "ForceBrep" in obj.IfcAttributes.keys():
+                if obj.IfcAttributes["ForceBrep"] == "True":
                     brepflag = True
 
         if DEBUG: print "Adding " + obj.Label + " as Ifc" + ifctype
@@ -1324,21 +1373,9 @@ def getIfcBrepFacesData(obj,scale=1,sub=False,tessellation=1):
                 if not obj.Shape.isNull():
                     if obj.Shape.isValid():
                         shape = obj.Shape
-        elif hasattr(obj,"Terrain"):
-            if obj.Terrain:
-                if hasattr(obj.Terrain,"Shape"):
-                    if obj.Terrain.Shape:
-                        if not obj.Terrain.Shape.isNull():
-                            if obj.Terrain.Shape.isValid():
-                                fcshape = obj.Terrain.Shape
     if shape:
         import Part
         sols = []
-        if fcshape.Solids:
-            dataset = fcshape.Solids
-        else:
-            dataset = fcshape.Shells
-            print "Warning! object contains no solids"
         for sol in shape.Solids:
             s = []
             curves = False
@@ -1388,3 +1425,630 @@ def explore(filename=None):
         d = ifcReader.explorer(filename,schema)
         d.show()
         return d
+
+
+
+###############################################################################################################
+###############################################################################################################
+###############################################################################################################
+#Methoden bhb
+###############################################################################################################
+def getObjectAttributes(objid, objtype, objname):
+  """ Dictionary objectAttributes 
+  
+  """
+  if objname == None:
+    objname = ''
+  objectAttributes = {"ID":str(objid), "Type":objtype, "Name":objname}
+  #print objectAttributes
+  return objectAttributes
+
+
+
+def getObjectMaterials(obj, materialrelations):
+  """ Dictionary objectMaterials mit key Materialname value Dicke (nur bei IfcMaterialLayer sonst leerer String)
+  
+  """
+  if len(materialrelations) == 0:
+    print "Keine Materialdefinitionen in der Datei vorhanden!"
+    return None
+  objectMaterials = {}
+  materiallayerlist = []
+  materiallist = []
+  for p in materialrelations:
+    for c in getAttr(p,"RelatedObjects"):
+      if str(obj) == str(c):
+        #print c                  # IfcSlab, IfcWall, ...
+        #print p                  # IfcRelAssociatesMaterial
+        #print p.get_argument(5)   # see if ...
+        if p.get_argument(5) is not None:  # could be none if Allplan 2012 and no Material is definend (Dachhaut)
+          if p.get_argument(5).is_a("IfcMaterialLayerSetUsage"):
+            #print p.get_argument(5).get_argument(0)                      # IfcMaterialLayerSet
+            #print p.get_argument(5).get_argument(0).get_argument(0)      # List IfcMaterialLayer
+            materiallayerlist = p.get_argument(5).get_argument(0).get_argument(0)
+          elif p.get_argument(5).is_a("IfcMaterialLayerSet"):
+            #print p.get_argument(5).get_argument(0)                      # List IfcMaterialLayer
+            materiallayerlist = p.get_argument(5).get_argument(0)
+          elif p.get_argument(5).is_a("IfcMaterialList"):
+            #print p.get_argument(5).get_argument(0)                      # List IfcMaterial
+            materiallist = p.get_argument(5).get_argument(0)
+          elif p.get_argument(5).is_a("IfcMaterial"):
+            #print p.get_argument(5).get_argument(0)                      # String Material
+            materiallist.append(p.get_argument(5))
+          else:
+            print (p.get_argument(5).is_a() + " is not implemented")
+            #print p.get_argument(5)
+  if len(materiallist) > 0 and len(materiallayerlist)  == 0:
+    #print "materiallist hat eintraege!!"
+    # add materiallist to dict
+    for m in materiallist:
+      objectMaterials[m.get_argument(0)] = 'not defiened' 
+  elif len(materiallayerlist) > 0 and len(materiallist) == 0:
+    #print "materiallayerlist hat eintraege!!"
+    for m in materiallayerlist:
+      #print m                                    # IfcMaterialLayer
+      #print m.get_argument(0)                    # IfcMaterial
+      #print ( m.get_argument(0).get_argument(0) + ' --> ' +  str(m.get_argument(1)) )    # material + thickness 
+      if m.get_argument(1) is not None:
+        objectMaterials[m.get_argument(0).get_argument(0)] = str(m.get_argument(1))
+      else:
+        objectMaterials[m.get_argument(0).get_argument(0)] = 'not defiened'
+  elif len(materiallist) == 0 and len(materiallayerlist)  == 0:
+    print "Keine Materialdefinition fuer dieses Objekt gefunden!!"
+    return None
+  else:
+    print "Etwas ist bei Auslesen des Materials schiefgelaufen, es hat Materiallist und materiallayerlist"
+    #print materiallist
+    #print materiallayerlist
+    
+  # print objectMaterials
+  #for m in objectMaterials:
+  #  print (m + ' --> ' + objectMaterials[m])
+  
+  return objectMaterials
+
+
+
+def getObjectPropertySets(obj, propertyrelations):
+  """ liste objectProperties mit tupels aus String propertysetname und Dictionary mit Inhalt 
+  
+  """
+  if len(propertyrelations) == 0:
+    print "Keine Propertydefinitionen in der Datei vorhanden!"
+    return None
+  
+  objectProperties = []
+  
+  # IfcElementQuantity and IfcPropertySet
+  quantityentrylist = []
+  propertyentrylist = []
+  for p in propertyrelations:
+    for c in getAttr(p,"RelatedObjects"):
+      if str(obj) == str(c):
+        #print c
+        #print p
+        #print p.get_argument(5)   # ist der gesamte entity
+        if p.get_argument(5).is_a("IfcElementQuantity"):
+          quantityentrylist.append(p.get_argument(5))
+        elif p.get_argument(5).is_a("IfcPropertySet"):
+          propertyentrylist.append(p.get_argument(5))
+        else:
+          print (p.get_argument(5).is_a() + " is not implemented: Nur IfcElementQuantity und IfcPropertySet")
+          #print p.get_argument(5)
+         
+  for qe in quantityentrylist:
+    #print qe
+    objectProperties.append(getQuantities(qe))
+  for pse in propertyentrylist:
+    #print pse
+    objectProperties.append(getPropertryset(pse))
+  
+  if len(objectProperties) == 0:
+    print "Keine PropertySets und ElementQuantities fuer dieses Objekt gefunden!!"
+    return None
+
+  # print objectProperties
+  '''print ("    Found the following PropertySets and ElementQuantitys")
+  for o in objectProperties:
+    print ('        ' + o[0])
+    for k in o[1]:
+      print ( '            ' + k + '  -->  ' + o[1][k] )
+  '''
+  
+  return (objectProperties)
+
+
+###################################################################################
+def getQuantities(qe):
+  """Liste von ElementQuantityEntries wird uebergeben. 
+  
+  Tupel welches string mit quantityname und dictionary mit quantityentries (key, value) wird zurueckuebergeben
+  """
+  #print qe     # elementquantityentry
+  gp = {}
+  quantitysetname = ''
+  # 0  UUID
+  # 1  Verweis auf Ownerhistory
+  # 2  ElementQuantityName (String)
+  # 3  ?
+  # 4  ?
+  # 5  zugehoerige Entities (List)
+  quantitysetname = qe.get_argument(2)
+  #print ("    Found ElementQuantity: " + propertysetname)
+  quantitylist = qe.get_argument(5)
+  for q in quantitylist:
+    #print q
+    #print q.get_argument(0)+'='+str(q.get_argument(3))+' '+q.get_argument(2).get_argument(3)
+    # eintraege in dictionary schreiben
+    #Values of Add::PropertyMap must be Strings
+    gp[q.get_argument(0)] = str(q.get_argument(3))
+  #print gp
+  #print quantitysetname
+  return (quantitysetname,gp)
+
+
+
+def getPropertryset(pse):
+  """Liste von PropertySetEntries wird uebergeben. 
+  
+  Tupel welches string mit setname und dictionary mit setentries (key, value) wird zurueckuebergeben
+  """
+  #print pse     # properysetentry
+  gp = {}
+  propertysetname = ''
+  # 0  UUID
+  # 1  Verweis auf Ownerhistory
+  # 2  PropertySetName (String)
+  # 3  ?
+  # 4  zugehoerige Entities (List)
+  propertysetname = pse.get_argument(2)
+  #print ("    Found PropertySet: " + propertysetname)
+  propertysetlist = pse.get_argument(4)
+  for q in propertysetlist:
+    if q.is_a("IfcComplexProperty"):
+       #print ("    Found IfcComplexProperty, alle der Gesamtwand zugeordnet")
+       # bei waenden hat jeder layer seine eigenen props
+       # da ich nur ein layer habe ist es egal
+       #print q   # ist der gesamte entity
+       # 0  ComplexPropertyName (String)
+       # 1  String
+       # 2  String
+       # 3  zugehoerige Entities (List)
+       #print q.get_argument(0)
+       #print q.get_argument(1)
+       #print q.get_argument(2)
+       for e in q.get_argument(3):
+         if e.is_a("IfcPropertySingleValue"):
+           gp = getPropertryEntry(e, gp)
+         else:
+           print "Not implemented yet!"
+           print e
+    elif q.is_a("IfcPropertySingleValue"):
+      gp = getPropertryEntry(q, gp)
+    else:
+       print "Not implemented yet! Only IfcPropertySingleValue and IfcComplexProperty are is implemented"
+       print q
+  #print gp
+  #print propertysetname
+  return (propertysetname, gp)
+
+
+
+def getPropertryEntry(pe, gp):
+  """extract keys and values from IfcPropertySingleValue
+  
+  """
+  
+  # entity
+  #print pe   # ist der gesamte entity
+  # 0  Key 
+  # 1  ?
+  # 2  Value 
+  # 3  ?
+  
+  # key
+  #print pe.get_argument(0)  # key
+  pe_key = pe.get_argument(0)
+  
+  # value
+  #print ("       Found Property: " + str(pe.get_argument(2)))
+  # Values of Add::PropertyMap must be Strings
+  if pe.get_argument(2) == None:
+    gp[pe_key] = ""
+  elif pe.get_argument(2).is_a("IfcDescriptiveMeasure"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcLabel"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcText"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcPositiveLengthMeasure"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcInteger"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcBoolean"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcLengthMeasure"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcAreaMeasure"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcVolumeMeasure"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcPlaneAngleMeasure"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcThermalTransmittanceMeasure"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcCountMeasure"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcMassMeasure"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcLogical"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcIdentifier"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  elif pe.get_argument(2).is_a("IfcReal"):
+    gp[pe_key] = str(pe.get_argument(2).get_argument(0))
+  else:
+    print pe.get_argument(2)
+    print "Not implemented!"
+  return (gp)  
+
+
+###################################################################################
+def  addObjectAttributes(nobj, objectAttributes):
+  """nobj: Attribute als Dicionariy (App::PropertyMap) zuweisen
+
+  """
+  if objectAttributes == None:
+    print "      No Attributes added."
+    return(nobj)
+
+  if hasattr(nobj, "IfcImportedAttributes"):
+    print "      Object allready has IfcImportedAttributes."
+    return(nobj)    
+
+  nobj.addProperty("App::PropertyMap","IfcImportedAttributes","IfcImportedAttributes","dictionary of imported standard object attributes")
+  nobj.IfcImportedAttributes = objectAttributes
+  print "      added: Standard Attributes"
+
+  # solange die Dictionaries nicht angezeigt werden konnen fuege auch Attribute hinzu, die direkt angezeigt werden
+  nobj.addProperty("App::PropertyString","IfcObjectType","IfcAttributesTMP","string of imported IfcType")
+  nobj.IfcObjectType = objectAttributes['Type']
+  
+  return(nobj)
+
+
+
+def addObjectMaterials(nobj, objectMaterials):
+  """nobj: die Gefundenen materials (objectMaterials) als Dicionariy (App::PropertyMap) zuweisen
+
+  """
+  if objectMaterials == None:
+    print "      No Materials added."
+    return(nobj)
+  
+  if hasattr(nobj, "IfcImportedMaterials"):
+    print "      Object allready has IfcImportedMaterials."
+    return(nobj)    
+
+  nobj.addProperty("App::PropertyMap","IfcImportedMaterials","IfcImportedMaterials","dictionary of imported object materials")
+  nobj.IfcImportedMaterials = objectMaterials
+  print "      added: Materials"
+  
+  # solange die Dictionaries nicht angezeigt werden konnen fuege auch Attribute hinzu, die direkt angezeigt werden (das erste Material)
+  nobj.addProperty("App::PropertyString","IfcMaterial","IfcAttributesTMP","string of imported Material (the first (ABC) if more than one)")
+  for k in sorted(objectMaterials):
+    nobj.IfcMaterial = k
+  
+  return(nobj)
+
+
+
+def addObjectPropertySets(nobj, objectPropertySets):
+  """nobj: die Gefundenen Attribute (objectProperties) als Dicionaries (App::PropertyMap) zuweisen
+
+  """
+  if objectPropertySets == None:
+    print "      No Properties added."
+    return(nobj)
+  
+  '''
+  # Allgemeine Properties
+  #nobj.addProperty("App::PropertyMap","IfcObjectProp","IfcObjectProp","dictionary of imported properties")
+  #nobj.IfcObjectProp = getIfcObjProperties(objname,objid,objtype)
+
+  print ("    " + str(len(objectProperties)) + " PropertySets und Quantities wurden zur Zuweisung von PropertyMaps uebergeben")
+  for io, o in enumerate(objectProperties):
+    #print ( 'Name dieses Properties ' + str(io) + ' ist ' + o[0] )
+    #propertymapname = ('PropertyMap' + str(io))
+    #print propertymapname
+    if len(o[1]) > 0:
+      if io == 0:
+        nobj.addProperty("App::PropertyMap","IfcElementQuantitySet","IfcElementQuantitySet","dictionary of imported object properties")
+        nobj.IfcElementQuantitySet = o[1]
+      if io == 1:
+        nobj.addProperty("App::PropertyMap","MyPropertyMap2","MyPropertyMap2","dictionary of imported object properties")
+        nobj.MyPropertyMap2 = o[1]
+      if io == 2:
+        nobj.addProperty("App::PropertyMap","MyPropertyMap3","MyPropertyMap3","dictionary of imported object properties")
+        nobj.MyPropertyMap3 = o[1]
+      if io == 3:
+        nobj.addProperty("App::PropertyMap","MyPropertyMap4","MyPropertyMap4","dictionary of imported object properties")
+        nobj.MyPropertyMap4 = o[1]
+      else:
+        print ("only 4 PropertyMaps implemented")
+
+      # pendent ueber schleife alle objectProperties vorhandenen zuweisen
+      #nobj.addProperty("App::PropertyMap",propertymapname,propertymapname,"dictionary of imported object properties")
+      #nobj.('PropertyMap' + str(io)) = o[1]
+  '''
+  
+  # All Properties in one Dictionary ohne Setnamen
+  #print ("    AllProperties")
+  AllProperties = {}
+  for o in objectPropertySets:
+    for k in o[1]:
+      AllProperties[k] =  o[1][k]
+  for k in AllProperties:
+    pass
+    #print ( '            ' + k + '  -->  ' + AllProperties[k] )
+  
+  if hasattr(nobj, "IfcImportedProperties"):
+    print "      Object allready has IfcImportedProperties."
+    return(nobj)    
+  
+  nobj.addProperty("App::PropertyMap","IfcImportedProperties","IfcImportedProperties","dictionary of imported object properties")
+  nobj.IfcImportedProperties = AllProperties
+  print "      added: Properties"
+  
+  # Ein dictionary mit unterdictionarys waere auch ne idee, aber die FreeCAD PropertyMap unterstuetzt nur Werte des Types String und Unicode
+  
+  return(nobj)
+
+
+def setView(): 
+  import FreeCADGui
+  FreeCADGui.SendMsgToActiveView("ViewFit")
+  FreeCADGui.activeDocument().activeView().viewAxometric()
+  FreeCADGui.activeDocument().activeView().setCameraType("Perspective")
+
+
+########################################################################################################################
+########################################################################################################################
+# Aufpassen, ArchObjekte haben ein VO und die Shape des ArchObjektes hat ein VO
+# immer nur das VO des Arch Objektes aendern
+# Wenn alle shape eingeschaltet werden liegen die beiden VO uebereinander !!!
+#    if '_FreeCAD_shape_body' not in o.Name:    # es waere cooler ein eigenes PythonFeature
+
+
+def colorPropertyMaterial():
+  """
+ Farben nach Property Material setzen
+  
+  """
+  for o in FreeCAD.ActiveDocument.Objects:
+    if '_FreeCAD_shape_body' not in o.Name:    # es waere cooler ein eigenes PythonFeature
+      if hasattr(o,'Shape'):         
+        if hasattr(o,'IfcImportedProperties'):
+          if 'Material' in o.IfcImportedProperties:
+            o.ViewObject.Transparency = 50
+            if o.IfcImportedProperties['Material'] == 'Backstein':
+              o.ViewObject.ShapeColor = (1.0,0.0,0.0)
+            elif o.IfcImportedProperties['Material'] == 'Beton':
+              o.ViewObject.ShapeColor = (0.0,1.0,0.0)
+            else:
+              o.ViewObject.ShapeColor = (1.0,1.0,1.0)
+              o.ViewObject.Transparency = 0
+        else:
+          # make all shapes which have no IfcImportedProperties transparent.
+          o.ViewObject.Transparency = 80
+          print ("  Object " + o.Name + " has no IfcImportedProperties")
+
+
+  
+# Problem, wass wenn IFCSLAB oder ifcslab oder codierung ???
+def colorObjectMaterial():
+  """ Farben nach Objekt Material setzen
+  
+  """
+  print "CedrusColours"
+  for o in FreeCAD.ActiveDocument.Objects:
+    if '_FreeCAD_shape_body' not in o.Name:    # es waere cooler ein eigenes PythonFeature
+      if hasattr(o,'Shape'):         
+        o.ViewObject.Visibility = True 
+        if hasattr(o,'IfcObjectType') and hasattr(o,'IfcMaterial'):
+          if   (o.IfcObjectType  == 'IfcWallStandardCase' or o.IfcObjectType  == 'IfcWall') and (o.IfcMaterial == 'Ortbeton' or o.IfcMaterial == 'Beton'):
+            o.ViewObject.Transparency = 30
+            o.ViewObject.ShapeColor = (0.0,1.0,0.0)
+          elif (o.IfcObjectType  == 'IfcWallStandardCase' or o.IfcObjectType  == 'IfcWall') and o.IfcMaterial == 'Backstein':
+            o.ViewObject.Transparency = 30
+            o.ViewObject.ShapeColor = (1.0,0.22,0.22)
+          elif (o.IfcObjectType  == 'IfcWallStandardCase' or o.IfcObjectType  == 'IfcWall') and o.IfcMaterial == 'Monobrick':
+            o.ViewObject.Transparency = 30
+            o.ViewObject.ShapeColor = (1.0,0.22,0.22)
+          elif (o.IfcObjectType  == 'IfcWallStandardCase' or o.IfcObjectType  == 'IfcWall') and o.IfcMaterial == 'Kalksandstein':
+            o.ViewObject.Transparency = 30
+            o.ViewObject.ShapeColor = (0.624,0.0,0.0)
+          elif (o.IfcObjectType  == 'IfcWallStandardCase' or o.IfcObjectType  == 'IfcWall') and o.IfcMaterial == 'Leichtbau':
+            o.ViewObject.Transparency = 30              
+            o.ViewObject.ShapeColor = (0.98,0.647,0.275)
+          elif (o.IfcObjectType  == 'IfcWallStandardCase' or o.IfcObjectType  == 'IfcWall') and o.IfcMaterial == 'Elementbeton':
+            o.ViewObject.Transparency = 20              
+            o.ViewObject.ShapeColor = (0.659,0.659,1.0)
+          elif (o.IfcObjectType  == 'IfcWallStandardCase' or o.IfcObjectType  == 'IfcWall') and o.IfcMaterial == 'Recyclingbeton':
+            o.ViewObject.Transparency = 30             
+            o.ViewObject.ShapeColor = (0.3,1.0,0.0)
+          elif o.IfcObjectType  == 'IfcSlab' and (o.IfcMaterial == 'Ortbeton' or o.IfcMaterial == 'Beton'):
+            o.ViewObject.Transparency = 30
+            o.ViewObject.ShapeColor = (1.0,1.0,0.11)
+          elif o.IfcObjectType  == 'IfcSlab' and o.IfcMaterial == 'Elementbeton':
+            o.ViewObject.Transparency = 30              
+            o.ViewObject.ShapeColor = (0.0,1.0,1.0)
+          elif o.IfcObjectType  == 'IfcSlab' and o.IfcMaterial == 'Holz':
+            o.ViewObject.Transparency = 30              
+            o.ViewObject.ShapeColor = (0.98,0.647,0.275)
+          elif o.IfcObjectType  == 'IfcSlab' and o.IfcMaterial == ' ':    # Dachhaut (Auenstein, Joho), steht auch im IfcSlab als Roof drin ToDo: auslesen
+            o.ViewObject.Transparency = 60              
+            o.ViewObject.ShapeColor = (1.0,0.667,0.941)
+          elif o.IfcObjectType  == 'IfcRoof' and o.IfcMaterial == ' ':
+            o.ViewObject.Transparency = 60
+            o.ViewObject.ShapeColor = (1.0,0.667,0.941)
+          elif o.IfcObjectType  == 'IfcFooting' and (o.IfcMaterial == 'Ortbeton' or o.IfcMaterial == 'Beton'):
+            o.ViewObject.Transparency = 40
+            o.ViewObject.ShapeColor = (0.51,0.314,0.157)
+          elif o.IfcObjectType  == 'IfcFooting' and o.IfcMaterial == 'Magerbeton':
+            o.ViewObject.Transparency = 30
+            o.ViewObject.ShapeColor = (1.0,0.5,0.0)
+          elif o.IfcObjectType  == 'IfcBuildingElementProxy' and o.IfcMaterial == 'Magerbeton':
+            o.ViewObject.Transparency = 30
+            o.ViewObject.ShapeColor = (1.0,0.5,0.0)
+          elif o.IfcObjectType  == 'IfcColumn' and (o.IfcMaterial == 'Ortbeton' or o.IfcMaterial == 'Beton'):
+            o.ViewObject.Transparency = 0
+            o.ViewObject.ShapeColor = (0.0,0.431,0.0)
+          elif o.IfcObjectType  == 'IfcColumn' and o.IfcMaterial == 'Elementbeton':
+            o.ViewObject.Transparency = 0
+            o.ViewObject.ShapeColor = (0.0,1.0,1.0)
+          elif o.IfcObjectType  == 'IfcColumn' and o.IfcMaterial == 'Baustahl':
+            o.ViewObject.Transparency = 0
+            o.ViewObject.ShapeColor = (0.0,0.0,1.0)
+          elif o.IfcObjectType  == 'IfcColumn' and o.IfcMaterial == 'Holzbau':
+            o.ViewObject.Transparency = 30
+            o.ViewObject.ShapeColor = (0.98,0.647,0.275)
+          elif o.IfcObjectType  == 'IfcBeam' and (o.IfcMaterial == 'Ortbeton' or o.IfcMaterial == 'Beton'):
+            o.ViewObject.Transparency = 30
+            o.ViewObject.ShapeColor = (0.0,0.431,0.0)
+          elif o.IfcObjectType  == 'IfcBeam' and o.IfcMaterial == 'Fugenmaterial':
+            o.ViewObject.Transparency = 30
+            o.ViewObject.ShapeColor = (1.0,0.0,1.0)
+
+          
+          else:
+            o.ViewObject.ShapeColor = (1.0,1.0,1.0)  # weiss sieht schoen cremig aus :-)
+            o.ViewObject.Transparency = 0
+            print (o.Name + ' --> ' + o.IfcObjectType + ' --> ' + o.IfcMaterial)
+        else:
+          # make all shapes which have no IfcObjectType transparent.
+          o.ViewObject.Transparency = 0
+          o.ViewObject.ShapeColor = (0.0,0.0,0.0)
+          print ("  Object " + o.Name + " has no IfcObjectType or no IfcMaterial")
+
+
+
+def getObjectMaterialList():
+  """ Liste aller Objekt Materialien
+  
+  """
+  objectmateriallist = []
+  for o in FreeCAD.ActiveDocument.Objects:
+    if '_FreeCAD_shape_body' not in o.Name:    # es waere cooler ein eigenes PythonFeature
+      if hasattr(o,'Shape'):         
+        if hasattr(o,'IfcImportedMaterials'):
+          for k in o.IfcImportedMaterials:
+            if k not in objectmateriallist:
+              print k
+              objectmateriallist.append(k)
+        else:
+          print ("  Object " + o.Name + " has no IfcImportedMaterials")
+
+
+
+def farbImport():
+  """
+  Falls Farben in den propertysets definiert sind. Aeltere ifc-dateien
+  
+  """
+  for o in FreeCAD.ActiveDocument.Objects:
+    if '_FreeCAD_shape_body' not in o.Name:    # es waere cooler ein eigenes PythonFeature
+      if hasattr(o,'Shape'):         
+        if hasattr(o,'IfcImportedProperties'):
+          if 'Blue' in o.IfcImportedProperties:
+            print o.Name
+            print ( o.Name + '   R: ' + o.IfcImportedProperties['Red'] + '   G: ' +  o.IfcImportedProperties['Green'] + '   B: ' +  o.IfcImportedProperties['Blue'] )
+            r = int(o.IfcImportedProperties['Red'])/255.0
+            #print r
+            g = int(o.IfcImportedProperties['Green'])/255.0
+            b = int(o.IfcImportedProperties['Blue'])/255.0
+            if int(o.IfcImportedProperties['Red']) == 229 and int(o.IfcImportedProperties['Green']) == 229 and int(o.IfcImportedProperties['Blue']) == 229 :
+              print ('Mache Grau heller!')
+              r = .999
+              g = .999
+              b = .999
+            o.ViewObject.ShapeColor = (r,g,b)
+            o.ViewObject.Transparency = 0
+        else:
+          # make all shapes which have no IfcImportedProperties transparent too.
+          o.ViewObject.Transparency = 75
+          print ("  Object " + o.Name + " has no IfcImportedProperties")
+
+
+
+def eineFarbe():
+  for o in FreeCAD.ActiveDocument.Objects:
+    if '_FreeCAD_shape_body' not in o.Name:    # nur die PythonFeatures. Es waere cooler ein eigenes PythonFeature
+      if hasattr(o,'Shape'):      
+        o.ViewObject.ShapeColor = (0.3,0.4,0.4)   
+        o.ViewObject.Transparency = 0
+        o.ViewObject.Visibility = True 
+
+
+
+
+def volumeTest():
+  for o in FreeCAD.ActiveDocument.Objects:
+    if hasattr(o,'Shape'):         
+      o.ViewObject.ShapeColor = (0.0,0.0,1.0)   # all shapes blue and transparent
+      o.ViewObject.Transparency = 75
+      o.ViewObject.Visibility = False 
+      if '_FreeCAD_shape_body' not in o.Name:    # nur die PythonFeatures. Es waere cooler ein eigenes PythonFeature
+        o.ViewObject.Visibility = True 
+        try:
+          volumeFreeCAD = o.Shape.Volume  # wenn shape kein solid ist wird eine exception ausgeloest. diese fangen wir ab!!!
+        except:
+          print ("  error calculating volume of " + o.Name + " Shape seams invalid")
+          o.ViewObject.ShapeColor = (1.0,1.0,0.0)   # yellow if invalid shape
+          o.ViewObject.Transparency = 0
+        if hasattr(o,'IfcImportedProperties'):
+          volumeImported = 0 
+          if 'NetVolume' in o.IfcImportedProperties:
+            volumeImported = float(o.IfcImportedProperties['NetVolume'])
+            #volumeFreeCAD = volumeFreeCAD*1E-9         # Allplan    
+          elif 'Volume' in o.IfcImportedProperties:  
+            volumeImported = float(o.IfcImportedProperties['Volume'])
+          if volumeImported != 0:
+            o.ViewObject.ShapeColor = (0.3,0.4,0.4)   # grau wenn IfcImportedProperties vorhanden sind 
+            o.ViewObject.Transparency = 0             # undurchsichtig
+            #print o.Name
+            #print o.Shape.Volume*1E-9
+            q = volumeFreeCAD / volumeImported   
+            #if q < 0.990 or q > 1.010:
+            if q < 0.90 or q > 1.10:
+              o.ViewObject.ShapeColor = (1.0,0.0,0.0)     # rot wenn volumen nicht uebereinstimmt
+              print ("  Object: " + o.Name  + " --> Volumes not equal: volumeFreeCAD / volumeImported = " + str(q))
+            else:
+              print ("  Object: " + o.Name  + " --> Volumes equal: volumeFreeCAD / volumeImported = " + str(q))
+              o.ViewObject.Transparency = 80  #grau ist es schon nun auch durchsichtig wenn volumen stimmt
+        else:
+          print ("  Object " + o.Name + " has no IfcImportedProperties")
+          o.ViewObject.ShapeColor = (0.0,1.0,0.0)   #green if no IfcImportedProperties available
+          #o.ViewObject.Transparency = 0
+          o.ViewObject.Visibility = False
+
+'''
+def volumetest():
+  sys.path.append('/home/hugo/Documents/projekte--ifc/freecad/python--freecad--ArchToolBox/')
+  import ArchToolBox as ATB
+  ATB.importtest_volumequantity()
+'''
+
+
+'''
+ cd /home/hugo/Documents/projekte--ifc/freecad/development/snapshot/free-cad-code/build/bin/
+ ./FreeCAD 
+ ./FreeCAD ../../../../../BIM--IFC/modelle--oeffentlich/Eckfenster--001.ifc 
+ ./FreeCAD ../../../../../BIM--IFC/modelle--bhb--kleine--oBew/calmo.ifc
+'''
+'''
+reload(importIFC)
+'''
+
+
+
