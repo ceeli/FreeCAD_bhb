@@ -1065,8 +1065,8 @@ def export(exportList,filename):
         # getting the "Force BREP" flag
         brepflag = False
         if hasattr(obj,"IfcAttributes"):
-            if "ForceBrep" in obj.IfcAttributes.keys():
-                if obj.IfcAttributes["ForceBrep"] == "True":
+            if "FlagForceBrep" in obj.IfcAttributes.keys():
+                if obj.IfcAttributes["FlagForceBrep"] == "True":
                     brepflag = True
 
         if DEBUG: print "Adding " + obj.Label + " as Ifc" + ifctype
@@ -1373,9 +1373,21 @@ def getIfcBrepFacesData(obj,scale=1,sub=False,tessellation=1):
                 if not obj.Shape.isNull():
                     if obj.Shape.isValid():
                         shape = obj.Shape
+        elif hasattr(obj,"Terrain"):
+            if obj.Terrain:
+                if hasattr(obj.Terrain,"Shape"):
+                    if obj.Terrain.Shape:
+                        if not obj.Terrain.Shape.isNull():
+                            if obj.Terrain.Shape.isValid():
+                                fcshape = obj.Terrain.Shape
     if shape:
         import Part
         sols = []
+        if fcshape.Solids:
+            dataset = fcshape.Solids
+        else:
+            dataset = fcshape.Shells
+            print "Warning! object contains no solids"
         for sol in shape.Solids:
             s = []
             curves = False
@@ -1713,6 +1725,8 @@ def  addObjectAttributes(nobj, objectAttributes):
   # solange die Dictionaries nicht angezeigt werden konnen fuege auch Attribute hinzu, die direkt angezeigt werden
   nobj.addProperty("App::PropertyString","IfcObjectType","IfcAttributesTMP","string of imported IfcType")
   nobj.IfcObjectType = objectAttributes['Type']
+  nobj.addProperty("App::PropertyString","IfcObjectID","IfcAttributesTMP","string of imported IfcID")
+  nobj.IfcObjectID = objectAttributes['ID']
   
   return(nobj)
 
@@ -1837,6 +1851,50 @@ def setView():
 #    if '_FreeCAD_shape_body' not in o.Name:    # es waere cooler ein eigenes PythonFeature
 
 
+
+def findID(oid):
+  """ Objekt finden nach ID
+  
+  
+  importIFC.findID(XXXX)
+  """
+  print "Find ID"
+  for o in FreeCAD.ActiveDocument.Objects:
+    if '_FreeCAD_shape_body' not in o.Name:    # es waere cooler ein eigenes PythonFeature
+      if hasattr(o,'Shape'):         
+        o.ViewObject.Visibility = True 
+        o.ViewObject.ShapeColor = (0.3,0.4,0.4)   # grau
+        o.ViewObject.Transparency = 75
+        if hasattr(o,'IfcObjectID'):
+          if  o.IfcObjectID  == str(oid) or o.IfcObjectID  == 'XXXX':
+            o.ViewObject.Transparency = 0
+            o.ViewObject.ShapeColor = (1.0,0.0,0.0)
+        else:
+          o.ViewObject.Transparency = 0
+          o.ViewObject.ShapeColor = (0.0,0.0,0.0)    # black
+          print ("  Object " + o.Name + " has no IfcObjectType or no IfcMaterial")
+
+
+
+def findshapeID(oid):
+  """ Objekt finden nach ID im namen fuer invalid shape
+  
+  
+  importIFC.findID(XXXX)
+  """
+  print "Find Shape ID"
+  for o in FreeCAD.ActiveDocument.Objects:
+    if '_FreeCAD_shape_body' not in o.Name:    # es waere cooler ein eigenes PythonFeature
+      if hasattr(o,'Shape'):         
+        o.ViewObject.Visibility = True 
+        o.ViewObject.ShapeColor = (0.3,0.4,0.4)   # grau
+        o.ViewObject.Transparency = 75
+    if hasattr(o,'Name'):
+      if str(oid) in o.Name:
+        o.ViewObject.Transparency = 0
+        o.ViewObject.ShapeColor = (1.0,0.0,0.0)
+
+
 def colorPropertyMaterial():
   """
  Farben nach Property Material setzen
@@ -1943,9 +2001,8 @@ def colorObjectMaterial():
             o.ViewObject.Transparency = 0
             print (o.Name + ' --> ' + o.IfcObjectType + ' --> ' + o.IfcMaterial)
         else:
-          # make all shapes which have no IfcObjectType transparent.
           o.ViewObject.Transparency = 0
-          o.ViewObject.ShapeColor = (0.0,0.0,0.0)
+          o.ViewObject.ShapeColor = (0.0,0.0,0.0)   # black
           print ("  Object " + o.Name + " has no IfcObjectType or no IfcMaterial")
 
 
