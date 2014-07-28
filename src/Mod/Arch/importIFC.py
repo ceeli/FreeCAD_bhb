@@ -1802,6 +1802,23 @@ def addObjectPropertySets(nobj, objectPropertySets):
   
   # Ein dictionary mit unterdictionarys waere auch ne idee, aber die FreeCAD PropertyMap unterstuetzt nur Werte des Types String und Unicode
   
+  # solange die Dictionaries nicht angezeigt werden konnen fuege auch Attribute hinzu, die direkt angezeigt werden
+  if 'NetVolume' in nobj.IfcImportedProperties:
+    nobj.addProperty("App::PropertyString","IfcNetVolume","IfcElementQuantity","string of imported NetVolume (if available)")
+    nobj.IfcNetVolume = nobj.IfcImportedProperties['NetVolume']
+  if 'GrossVolume' in nobj.IfcImportedProperties:
+    nobj.addProperty("App::PropertyString","IfcGrossVolume","IfcElementQuantity","string of imported GrossVolume (if available)")
+    nobj.IfcGrossVolume = nobj.IfcImportedProperties['GrossVolume']
+  if 'GrossSideArea' in nobj.IfcImportedProperties:
+    nobj.addProperty("App::PropertyString","IfcGrossSideArea","IfcElementQuantity","string of imported GrossSideArea (if available)")
+    nobj.IfcGrossSideArea = nobj.IfcImportedProperties['GrossSideArea']
+  if 'NominalWidth' in nobj.IfcImportedProperties:
+    nobj.addProperty("App::PropertyString","IfcNominalWidth","IfcElementQuantity","string of imported NominalWidth (if available)")
+    nobj.IfcNominalWidth = nobj.IfcImportedProperties['NominalWidth']
+  if 'Width' in nobj.IfcImportedProperties:
+    nobj.addProperty("App::PropertyString","IfcWidth","IfcElementQuantity","string of imported Width (if available)")
+    nobj.IfcWidth = nobj.IfcImportedProperties['Width']
+  
   return(nobj)
 
 
@@ -1993,6 +2010,7 @@ def eineFarbe():
 
 
 def volumeTest():
+  print "VolumeTest"
   for o in FreeCAD.ActiveDocument.Objects:
     if hasattr(o,'Shape'):         
       o.ViewObject.ShapeColor = (0.0,0.0,1.0)   # all shapes blue and transparent
@@ -2024,10 +2042,10 @@ def volumeTest():
               o.ViewObject.ShapeColor = (1.0,0.0,0.0)     # rot wenn volumen nicht uebereinstimmt
               print ("  Object: " + o.Name  + " --> Volumes not equal: volumeFreeCAD / volumeImported = " + str(q))
             else:
-              print ("  Object: " + o.Name  + " --> Volumes equal: volumeFreeCAD / volumeImported = " + str(q))
+              #print ("  Object: " + o.Name  + " --> Volumes equal: volumeFreeCAD / volumeImported = " + str(q))
               o.ViewObject.Transparency = 80  #grau ist es schon nun auch durchsichtig wenn volumen stimmt
         else:
-          print ("  Object " + o.Name + " has no IfcImportedProperties")
+          print ('  Object ' + o.Name + ' ' + o.IfcObjectType + ' ' + ' has no IfcImportedProperties')
           o.ViewObject.ShapeColor = (0.0,1.0,0.0)   #green if no IfcImportedProperties available
           #o.ViewObject.Transparency = 0
           o.ViewObject.Visibility = False
