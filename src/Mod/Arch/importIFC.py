@@ -1979,7 +1979,7 @@ def colorObjectMaterial():
           elif o.IfcObjectType  == 'IfcColumn' and (o.IfcMaterial == 'Ortbeton' or o.IfcMaterial == 'Beton'):
             o.ViewObject.Transparency = 0
             o.ViewObject.ShapeColor = (0.0,0.431,0.0)
-          elif o.IfcObjectType  == 'IfcColumn' and o.IfcMaterial == 'Elementbeton':
+          elif o.IfcObjectType  == 'IfcColumn' and (o.IfcMaterial == 'Elementbeton' or o.IfcMaterial == 'Betonelement'):
             o.ViewObject.Transparency = 0
             o.ViewObject.ShapeColor = (0.0,1.0,1.0)
           elif o.IfcObjectType  == 'IfcColumn' and o.IfcMaterial == 'Baustahl':
@@ -2004,6 +2004,92 @@ def colorObjectMaterial():
           o.ViewObject.Transparency = 0
           o.ViewObject.ShapeColor = (0.0,0.0,0.0)   # black
           print ("  Object " + o.Name + " has no IfcObjectType or no IfcMaterial")
+
+
+
+def textureMaterial():
+  """ Texturen nach Material setzen
+  
+  """
+  import FreeCADGui
+  from PyQt4 import QtGui
+  from pivy import coin
+  print "Texturen"
+  texturefilepath = '/home/hugo/Documents/projekte--ifc/freecad/BIM--IFC/Texturen--Vorlageproj/'
+  material2texture = { 'noMaterial'          : texturefilepath+'noMaterial.jpg',
+                       'Beton'               : texturefilepath+'beton_bewehrt.jpg',
+                       'Ortbeton'            : texturefilepath+'beton_bewehrt.jpg',
+                       'Betonelement'        : texturefilepath+'betonelemente.jpg',
+                       'Elementbeton'        : texturefilepath+'betonelemente.jpg',
+                       'Misapor'             : texturefilepath+'misapor.jpg',
+                       'Recyclingbeton'      : texturefilepath+'misapor.jpg',
+                       'Beton_bestehend'     : texturefilepath+'beton_bestehend.jpg',
+                       'Spezialbeton'        : texturefilepath+'beton_01.jpg',
+                       'Sichtbeton'          : texturefilepath+'beton_01.jpg',
+                       'Beton_unbewehrt'     : texturefilepath+'beton_01.jpg',
+
+                       'Backstein'           : texturefilepath+'backstein.jpg',
+                       'Monobrick'           : texturefilepath+'backstein.jpg',
+                       'Kalksandstein'       : texturefilepath+'kalksandstein.jpg',
+                       'Calmostein'          : texturefilepath+'calmostein.jpg',
+                       'Sumostein'           : texturefilepath+'sumostein.jpg',
+                       'Naturstein'          : texturefilepath+'naturstein.jpg',
+                       'Zementstein'         : texturefilepath+'zementstein.jpg',
+                       'Mauerwerk_bestehend' : texturefilepath+'mauerwerk_bestehend.jpg',
+                       'Porenbetonstein'     : texturefilepath+'porenbetonstein.jpg',
+                       'Mauerwerksstein'     : texturefilepath+'backstein.jpg',
+
+                       'Baustahl'            : texturefilepath+'stahl.jpg',
+                       'Stahl'               : texturefilepath+'stahl.jpg',
+                       'Fugenmaterial'       : texturefilepath+'daemmung_hart.jpg',
+                       'Daemmung_hart'       : texturefilepath+'daemmung_hart.jpg',
+                       'Holzbau'             : texturefilepath+'holz.jpg',
+                       'Leichtbau'           : texturefilepath+'holz.jpg',
+                       'Holz'                : texturefilepath+'holz.jpg',
+                       'Magerbeton'          : texturefilepath+'magerbeton.jpg',
+                       'Eindeckung'          : texturefilepath+'dachziegel.jpg'
+                      }
+  for o in FreeCAD.ActiveDocument.Objects:
+    if '_FreeCAD_shape_body' not in o.Name:    # es waere cooler ein eigenes PythonFeature
+      if hasattr(o,'Shape'):         
+        o.ViewObject.Visibility = True 
+        if hasattr(o,'IfcObjectType') and hasattr(o,'IfcMaterial'):
+          o.ViewObject.Transparency = 0
+          o.ViewObject.ShapeColor = (1.0,1.0,1.0)
+          rootnode = o.ViewObject.RootNode
+          tex =  coin.SoTexture2()
+          tex.filename = material2texture['noMaterial']  # weisse textur
+          
+          # falsche Materialzuweisung Modelle anpassen
+          if (o.IfcObjectType == 'IfcSlab' or 'IfcRoof') and o.IfcMaterial == ' ': 
+            o.IfcMaterial = 'Eindeckung'
+          if o.IfcMaterial == 'Feuerfestestein':
+            o.IfcMaterial = 'Sumostein'
+          if o.IfcMaterial == 'Calmo':
+            o.IfcMaterial = 'Calmostein'
+          if o.IfcMaterial == 'D\u00e4mmstoff hart' or o.IfcMaterial == 'D\u00e4mmung':
+            o.IfcMaterial = 'Daemmung_hart'
+          if o.IfcMaterial == 'Holz massiv':
+            o.IfcMaterial = 'Holz'
+          if o.IfcMaterial == 'Mauerwerk bestehend':
+            o.IfcMaterial = 'Mauerwerk_bestehend'
+          if o.IfcMaterial == 'Dach allgemein':
+            o.IfcMaterial = 'Eindeckung'
+          if o.IfcMaterial == 'Beton bestehend':
+            o.IfcMaterial = 'Beton_bestehend'
+          if o.IfcMaterial == 'Beton unbewehrt':
+            o.IfcMaterial = 'Beton_unbewehrt'
+
+          if o.IfcMaterial in material2texture:
+            #print material2texture[o.IfcMaterial]
+            tex.filename = material2texture[o.IfcMaterial]
+          else:
+            print (o.Name + ' --> ' + o.IfcObjectType + ' --> ' + o.IfcMaterial)
+          rootnode.insertChild(tex,1)
+        else:
+          o.ViewObject.Transparency = 0
+          o.ViewObject.ShapeColor = (0.0,0.0,0.0)   # black
+          #print ("  Object " + o.Name + " has no IfcObjectType or no IfcMaterial")
 
 
 
