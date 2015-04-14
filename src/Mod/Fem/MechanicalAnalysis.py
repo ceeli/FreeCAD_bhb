@@ -481,9 +481,25 @@ class _JobControlTaskPanel:
         inpfile.write('\n** constaints\n')
         for FixedObject in FixedObjects:
             inpfile.write('*BOUNDARY\n')
-            inpfile.write(FixedObject['Object'].Name + ',1\n')
-            inpfile.write(FixedObject['Object'].Name + ',2\n')
-            inpfile.write(FixedObject['Object'].Name + ',3\n\n')
+            if hasattr(FixedObject['Object'],'Boundary') and len(FixedObject['Object'].Boundary) > 0:
+                    #print FixedObject['Object'].Boundary
+                    if 'TranslationX' in FixedObject['Object'].Boundary and FixedObject['Object'].Boundary['TranslationX'] == 'free':
+                        inpfile.write('**on ' + FixedObject['Object'].Name + ' direction 1 is free\n')                        
+                    else: # assume fixed 1
+                        inpfile.write(FixedObject['Object'].Name + ',1\n')                        
+                    if 'TranslationY' in FixedObject['Object'].Boundary and FixedObject['Object'].Boundary['TranslationY'] == 'free':
+                        inpfile.write('**on ' + FixedObject['Object'].Name + ' direction 2 is free\n')                        
+                    else: # assume fixed 2
+                        inpfile.write(FixedObject['Object'].Name + ',2\n')                        
+                    if 'TranslationZ' in FixedObject['Object'].Boundary and FixedObject['Object'].Boundary['TranslationZ'] == 'free':
+                        inpfile.write('**on ' + FixedObject['Object'].Name + ' direction 3 is free\n')                        
+                    else: # assume fixed 3
+                        inpfile.write(FixedObject['Object'].Name + ',3\n')                        
+            else:
+                inpfile.write(FixedObject['Object'].Name + ',1\n')
+                inpfile.write(FixedObject['Object'].Name + ',2\n')
+                inpfile.write(FixedObject['Object'].Name + ',3\n')
+            inpfile.write('\n')
 
         # write loads
         #inpfile.write('*DLOAD\n')
