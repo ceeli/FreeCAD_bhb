@@ -44,6 +44,9 @@ public:
     // Read-only (calculated values). These trigger changes in the ViewProvider
     App::PropertyVectorList Points;
     App::PropertyVectorList Normals;
+    
+    /// Boundary conditions
+    App::PropertyMap Boundary;
 
     /// recalculate the object
     virtual App::DocumentObjectExecReturn *execute(void);
