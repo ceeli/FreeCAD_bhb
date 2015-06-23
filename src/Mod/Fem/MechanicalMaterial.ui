@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>188</width>
-    <height>124</height>
+    <width>213</width>
+    <height>368</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -67,7 +67,7 @@
         <number>3</number>
        </property>
        <property name="maximum" stdset="0">
-        <double>2000000000.000000000</double>
+        <double>2000000000.000000000000000</double>
        </property>
        <property name="singleStep" stdset="0">
         <double>2.000000000000000</double>
@@ -126,6 +126,16 @@
       <bool>true</bool>
      </property>
     </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="pushButton_Reference">
+     <property name="text">
+      <string>Add reference</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QListWidget" name="list_References"/>
    </item>
   </layout>
  </widget>

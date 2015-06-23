@@ -38,6 +38,7 @@ def makeMechanicalMaterial(name):
     '''makeMaterial(name): makes an Material
     name there fore is a material name or an file name for a FCMat file'''
     obj = FreeCAD.ActiveDocument.addObject("App::MaterialObjectPython", name)
+    obj.addProperty("App::PropertyLinkList","Reference","Material","List of material shape")
     _MechanicalMaterial(obj)
     _ViewProviderMechanicalMaterial(obj.ViewObject)
     # FreeCAD.ActiveDocument.recompute()
@@ -53,20 +54,11 @@ class _CommandMechanicalMaterial:
                 'ToolTip': QtCore.QT_TRANSLATE_NOOP("Fem_Material", "Creates or edit the mechanical material definition.")}
 
     def Activated(self):
-        MatObj = None
-        for i in FemGui.getActiveAnalysis().Member:
-            if i.isDerivedFrom("App::MaterialObject"):
-                    MatObj = i
-
-        if (not MatObj):
-            FreeCAD.ActiveDocument.openTransaction("Create Material")
-            FreeCADGui.addModule("MechanicalMaterial")
-            FreeCADGui.doCommand("MechanicalMaterial.makeMechanicalMaterial('MechanicalMaterial')")
-            FreeCADGui.doCommand("App.activeDocument()." + FemGui.getActiveAnalysis().Name + ".Member = App.activeDocument()." + FemGui.getActiveAnalysis().Name + ".Member + [App.ActiveDocument.ActiveObject]")
-            FreeCADGui.doCommand("Gui.activeDocument().setEdit(App.ActiveDocument.ActiveObject.Name,0)")
-            # FreeCADGui.doCommand("Fem.makeMaterial()")
-        else:
-            FreeCADGui.doCommand("Gui.activeDocument().setEdit('" + MatObj.Name + "',0)")
+        FreeCAD.ActiveDocument.openTransaction("Create Material")
+        FreeCADGui.addModule("MechanicalMaterial")
+        FreeCADGui.doCommand("MechanicalMaterial.makeMechanicalMaterial('MechanicalMaterial')")
+        FreeCADGui.doCommand("App.activeDocument()." + FemGui.getActiveAnalysis().Name + ".Member = App.activeDocument()." + FemGui.getActiveAnalysis().Name + ".Member + [App.ActiveDocument.ActiveObject]")
+        FreeCADGui.doCommand("Gui.activeDocument().setEdit(App.ActiveDocument.ActiveObject.Name,0)")
 
     def IsActive(self):
         if FemGui.getActiveAnalysis():
@@ -133,6 +125,14 @@ class _MechanicalMaterialTaskPanel:
         QtCore.QObject.connect(self.form.cb_materials, QtCore.SIGNAL("activated(int)"), self.choose_material)
         QtCore.QObject.connect(self.form.input_fd_young_modulus, QtCore.SIGNAL("valueChanged(double)"), self.ym_changed)
         QtCore.QObject.connect(self.form.spinBox_poisson_ratio, QtCore.SIGNAL("valueChanged(double)"), self.pr_changed)
+
+        QtCore.QObject.connect(self.form.pushButton_Reference, QtCore.SIGNAL("clicked()"), self.add_reference)
+        self.form.list_References.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.form.list_References.connect(self.form.list_References, QtCore.SIGNAL("customContextMenuRequested(QPoint)" ), self.list_item_right_clicked)
+        self.references = obj.Reference
+        # fill data into the list_References items
+        self.rebuild_list_References()
+
         self.previous_material = self.obj.Material
         self.import_materials()
         previous_mat_path = self.get_material_path(self.previous_material)
@@ -150,12 +150,13 @@ class _MechanicalMaterialTaskPanel:
             self.choose_material(index)
 
     def accept(self):
+        self.obj.Reference = self.references
         FreeCADGui.ActiveDocument.resetEdit()
 
     def reject(self):
         self.obj.Material = self.previous_material
         print "Reverting to material:"
-        self.print_mat_data(self.previous_material)
+        #self.print_mat_data(self.previous_material)
         FreeCADGui.ActiveDocument.resetEdit()
 
     def goMatWeb(self):
@@ -190,7 +191,7 @@ class _MechanicalMaterialTaskPanel:
         if 'Description' in self.obj.Material:
             gen_mat_desc = self.obj.Material['Description']
         self.form.l_mat_description.setText(gen_mat_desc)
-        self.print_mat_data(self.obj.Material)
+        #self.print_mat_data(self.obj.Material)
 
     def get_material_name(self, material):
         if 'Name' in self.previous_material:
@@ -263,6 +264,56 @@ class _MechanicalMaterialTaskPanel:
         if use_mat_from_custom_dir:
             custom_mat_dir = self.fem_preferences.GetString("CustomMaterialsDir", "")
             self.add_mat_dir(custom_mat_dir, ":/icons/user.svg")
+
+    def list_item_right_clicked(self, QPos):
+        self.form.contextMenu = QtGui.QMenu()
+        menu_item = self.form.contextMenu.addAction("Remove Reference")
+        if len(self.references) == 0:
+            menu_item.setDisabled(True)
+        self.form.connect(menu_item, QtCore.SIGNAL("triggered()"), self.remove_reference)
+        parentPosition = self.form.list_References.mapToGlobal(QtCore.QPoint(0, 0))
+        self.form.contextMenu.move(parentPosition + QPos)
+        self.form.contextMenu.show()
+
+    def remove_reference(self):
+        if len(self.references) == 0: 
+            print 'return from remove_reference'
+            return
+        currentItemName = str(self.form.list_References.currentItem().text())
+        for ref in self.references:
+            if ref.Name == currentItemName:
+                self.references.remove(ref)
+        self.rebuild_list_References()
+
+    def add_reference(self):
+        # observer --> siehe rebar zeile 127 bis 130 es hat einen observer der eingabe erwartet
+        # aktuell solid markieren und button druecken 
+        selection = FreeCADGui.Selection.getSelection()
+        if len(selection) == 1:
+            sel = selection[0]
+        else:
+            print 'Select one Solid and click on the add Referenc Button to add the shape!'   # selecting more solids --> observer
+            return
+        if hasattr(sel,"Shape"):                   # isDerivedFrom would be better !
+            if sel.Shape.ShapeType == 'Solid':     # l auch faces fuer shell
+                #print 'Found a solid: ', sel.Name
+                if sel not in self.references:
+                    self.references.append(sel)
+                    self.rebuild_list_References()
+                else:
+                    print sel.Name, ' is allready in reference list!'
+        else:
+            print 'No shape found!'
+            return
+
+    def rebuild_list_References(self):
+        self.form.list_References.clear()
+        items = []
+        for i in self.references:
+            items.append(i.Name)
+        for listItemName in sorted(items):
+            listItem = QtGui.QListWidgetItem(listItemName, self.form.list_References)
+
 
 
 FreeCADGui.addCommand('Fem_MechanicalMaterial', _CommandMechanicalMaterial())
