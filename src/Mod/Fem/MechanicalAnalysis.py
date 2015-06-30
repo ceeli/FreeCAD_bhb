@@ -447,6 +447,20 @@ class _JobControlTaskPanel:
         if not self.MaterialObjects:
             QtGui.QMessageBox.critical(None, "Missing prerequisite", "No material object in the Analysis")
             return False
+        remaining_material = False
+        for mo in self.MaterialObjects:
+            if mo['Object'].MaterialShapes == 'all' and len(self.MaterialObjects) > 1:
+                QtGui.QMessageBox.critical(None, "Wrong prerequisite", "If MaterialShapes of a material is set to all only one material is allowed")
+                return False
+            elif mo['Object'].MaterialShapes == 'remaining' and remaining_material == False:
+                remaining_material = True
+                continue # jump to next m in materials
+            elif mo['Object'].MaterialShapes == 'remaining' and remaining_material == True:
+                QtGui.QMessageBox.critical(None, "Wrong prerequisite", "MaterialShapes is set to remaining for mor than one material")
+                return False
+            elif mo['Object'].MaterialShapes == 'referenced' and len(mo['Object'].Reference) == 0:
+                QtGui.QMessageBox.critical(None, "Wrong prerequisite", "At least one material has an empty reference list")
+                return False
 
         if not self.FixedObjects:
             QtGui.QMessageBox.critical(None, "Missing prerequisite", "No fixed-constraint nodes defined in the Analysis")

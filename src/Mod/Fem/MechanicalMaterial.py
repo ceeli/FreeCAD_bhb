@@ -33,12 +33,12 @@ __title__ = "Machine-Distortion FemSetGeometryObject managment"
 __author__ = "Juergen Riegel"
 __url__ = "http://www.freecadweb.org"
 
+material_shapes = ['all' ,'remaining' ,'referenced']
 
 def makeMechanicalMaterial(name):
     '''makeMaterial(name): makes an Material
     name there fore is a material name or an file name for a FCMat file'''
     obj = FreeCAD.ActiveDocument.addObject("App::MaterialObjectPython", name)
-    obj.addProperty("App::PropertyLinkList","Reference","Material","List of material shape")
     _MechanicalMaterial(obj)
     _ViewProviderMechanicalMaterial(obj.ViewObject)
     # FreeCAD.ActiveDocument.recompute()
@@ -70,8 +70,13 @@ class _CommandMechanicalMaterial:
 class _MechanicalMaterial:
     "The Material object"
     def __init__(self, obj):
-        self.Type = "MechanicaltMaterial"
+        obj.addProperty("App::PropertyLinkList","Reference","Material","List of material shapes")
+        obj.addProperty("App::PropertyEnumeration","MaterialShapes","Material","Classification of material shapes")
+        obj.MaterialShapes = material_shapes
+        obj.setEditorMode("MaterialShapes", 2) # hidden
+        obj.MaterialShapes = 'referenced'
         obj.Proxy = self
+        self.Type = "MechanicalMaterial"
         # obj.Material = StartMat
 
     def execute(self, obj):
@@ -120,18 +125,14 @@ class _MechanicalMaterialTaskPanel:
         self.obj = obj
 
         self.form = FreeCADGui.PySideUic.loadUi(FreeCAD.getHomePath() + "Mod/Fem/MechanicalMaterial.ui")
-
         QtCore.QObject.connect(self.form.pushButton_MatWeb, QtCore.SIGNAL("clicked()"), self.goMatWeb)
         QtCore.QObject.connect(self.form.cb_materials, QtCore.SIGNAL("activated(int)"), self.choose_material)
         QtCore.QObject.connect(self.form.input_fd_young_modulus, QtCore.SIGNAL("valueChanged(double)"), self.ym_changed)
         QtCore.QObject.connect(self.form.spinBox_poisson_ratio, QtCore.SIGNAL("valueChanged(double)"), self.pr_changed)
-
+        QtCore.QObject.connect(self.form.cb_material_shapes, QtCore.SIGNAL("currentIndexChanged(int)"), self.set_material_shapes_classification)
         QtCore.QObject.connect(self.form.pushButton_Reference, QtCore.SIGNAL("clicked()"), self.add_reference)
         self.form.list_References.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.form.list_References.connect(self.form.list_References, QtCore.SIGNAL("customContextMenuRequested(QPoint)" ), self.list_item_right_clicked)
-        self.references = obj.Reference
-        # fill data into the list_References items
-        self.rebuild_list_References()
 
         self.previous_material = self.obj.Material
         self.import_materials()
@@ -149,8 +150,25 @@ class _MechanicalMaterialTaskPanel:
             index = self.form.cb_materials.findData(previous_mat_path)
             self.choose_material(index)
 
+        self.mat_shapes_classification = self.obj.MaterialShapes
+        self.references = self.obj.Reference
+
+        if self.mat_shapes_classification == 'all':
+            # at startup no currentIndexChanged() is called --> manual calls
+            self.form.widget_stack.setCurrentIndex(0)
+            self.set_material_shapes_classification(0)
+        elif self.mat_shapes_classification == 'remaining':
+            self.form.cb_material_shapes.setCurrentIndex(1)
+        elif self.mat_shapes_classification == 'referenced':
+            # fill data into the list_References items
+            self.rebuild_list_References()
+            self.form.cb_material_shapes.setCurrentIndex(2)
+
+
     def accept(self):
         self.obj.Reference = self.references
+        self.obj.MaterialShapes = self.mat_shapes_classification
+        check_material_shape_classification()  # TODO if Fals is returned accept should not be allowed
         FreeCADGui.ActiveDocument.resetEdit()
 
     def reject(self):
@@ -265,6 +283,16 @@ class _MechanicalMaterialTaskPanel:
             custom_mat_dir = self.fem_preferences.GetString("CustomMaterialsDir", "")
             self.add_mat_dir(custom_mat_dir, ":/icons/user.svg")
 
+    def set_material_shapes_classification(self,index):
+        if index == 0:
+            self.mat_shapes_classification = 'all'
+            self.references = []
+        elif index == 1:
+            self.mat_shapes_classification = 'remaining'
+            self.references = []
+        elif index == 2:
+            self.mat_shapes_classification = 'referenced'
+
     def list_item_right_clicked(self, QPos):
         self.form.contextMenu = QtGui.QMenu()
         menu_item = self.form.contextMenu.addAction("Remove Reference")
@@ -313,6 +341,34 @@ class _MechanicalMaterialTaskPanel:
             items.append(i.Name)
         for listItemName in sorted(items):
             listItem = QtGui.QListWidgetItem(listItemName, self.form.list_References)
+
+
+
+# Helpers
+def check_material_shape_classification(Analysis=None):
+    if Analysis is None:
+        analysis_members = FemGui.getActiveAnalysis().Member
+    else:
+        analysis_members = FemGui.Analysis().Member
+    materials = []
+    for am in analysis_members:
+        if am.isDerivedFrom("App::MaterialObjectPython"):
+            materials.append(am)
+    remaining_material = False
+    for m in materials:
+        if m.MaterialShapes == 'all' and len(materials) > 1:
+            print 'ERROR: if MaterialShapes is set to all only one material is allowed'
+            return False
+        elif m.MaterialShapes == 'remaining' and remaining_material == False:
+            remaining_material = True
+            continue # jump to next m in materials
+        elif m.MaterialShapes == 'remaining' and remaining_material == True:
+            print 'ERROR: MaterialShapes is set to remaining for mor than one material'
+            return False
+        elif m.MaterialShapes == 'referenced' and len(m.Reference) == 0:
+            print 'ERROR: At least one material has an empty reference list'
+            return False
+    return True
 
 
 

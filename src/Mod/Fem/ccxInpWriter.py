@@ -65,9 +65,15 @@ class inp_writer:
             mat_obj_name = mat_obj.Name
             mat_name = mat_obj.Material['Name'][:80]
 
+            # checks done in MechanicalAnalysis --> User gets informed befor writing the mesh!!!
+
             print mat_obj_name, ':  ', mat_name
             f.write('*ELSET,ELSET=' + mat_obj_name + '\n')
-            if hasattr(mat_obj,'Reference'):
+            if mat_obj.MaterialShapes == 'all':
+                f.write('Eall\n')
+            elif mat_obj.MaterialShapes == 'remaining':
+                pass # wie komme ich an alle elementnummern, die nicht in anderen Matelsets geschrieben?!?
+            elif mat_obj.MaterialShapes == 'referenced':
                 for s in mat_obj.Reference:
                     n = []
                     e = []
@@ -80,8 +86,6 @@ class inp_writer:
                     for i in e:
                         f.write(str(i) + ',\n')
                     e_count = e_count + len(e)
-            else:
-                f.write('Eall\n')
             f.write('\n\n')
         if e_count != len(elementtable):
             print 'elementtable != e_count'
