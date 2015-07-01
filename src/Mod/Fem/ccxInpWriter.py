@@ -59,44 +59,50 @@ class inp_writer:
         f.write('\n***********************************************************\n')
         f.write('** Element sets for materials\n')
         f.write('** written by {} function\n'.format(sys._getframe().f_code.co_name))
-        remaining_material = None
+        remaining_material_obj = None
         all_material = False
         e_count = 0
-        e_used = []
+        e_referenced = []
+        e_not_referenced = []
         for m in self.material_objects:
             mat_obj = m['Object']
             mat_obj_name = mat_obj.Name
             mat_name = mat_obj.Material['Name'][:80]
-            print mat_obj_name, ':  ', mat_name, ':  ', mat_obj.MaterialShapes 
+            # print mat_obj_name, ':  ', mat_name, ':  ', mat_obj.MaterialShapes 
             if mat_obj.MaterialShapes == 'all':
                 all_material = True
                 f.write('*ELSET,ELSET=' + mat_obj_name + '\n')
                 f.write('Eall\n')
             elif mat_obj.MaterialShapes == 'remaining':
-                remaining_material = mat_obj
+                remaining_material_obj = mat_obj
             elif mat_obj.MaterialShapes == 'referenced':
                 f.write('*ELSET,ELSET=' + mat_obj_name + '\n')
                 for s in mat_obj.Reference:
-                    n = []
-                    e = []
+                    no = []
+                    el = []
                     if s.Shape.ShapeType == 'Solid':
-                        print '  MaterialReferenceSolid : ', s.Name  
-                        n = self.mesh_object.FemMesh.getNodesBySolid(s.Shape)
-                        e = getElementsByNodes(elementtable, n)
+                        # print '  MaterialReferenceSolid : ', s.Name  
+                        no = self.mesh_object.FemMesh.getNodesBySolid(s.Shape)
+                        el = getElementsByNodes(elementtable, no)
                     else:
                         print '  Only solids are supported by now!'
-                    for i in e:
-                        f.write(str(i) + ',\n')
-                    e_count += len(e)
-                    e_used += e
-        if remaining_material:
-            f.write('*ELSET,ELSET=' + mat_obj_name + '\n')
-            # elementtabel - e_used schreiben
-            # Anzahal geschriebene zu e_caunt addieren
+                    for e in sorted(el):
+                        f.write(str(e) + ',\n')
+                    e_count += len(el)
+                    e_referenced += el
+        if remaining_material_obj:
+            # print mat_obj_name, ':  ', mat_name, ':  ', mat_obj.MaterialShapes 
+            f.write('*ELSET,ELSET=' + remaining_material_obj.Name + '\n')
+            for e in elementtable:
+                if e not in e_referenced:
+                    e_not_referenced.append(e)
+            for e in sorted(e_not_referenced):
+                f.write(str(e) + ',\n')
+            e_count += len(e_not_referenced)
         f.write('\n\n')
         if not all_material:
             if e_count != len(elementtable):
-                print 'elementtable != e_count'
+                print 'ERROR: elementtable != e_count'
                 print e_count
                 print len(elementtable)
 
@@ -106,19 +112,19 @@ class inp_writer:
         f.write('** written by {} function\n'.format(sys._getframe().f_code.co_name))
         for fobj in self.fixed_objects:
             fix_obj = fobj['Object']
-            print fix_obj.Name
+            # print fix_obj.Name
             f.write('*NSET,NSET=' + fix_obj.Name + '\n')
             for o, elem in fix_obj.References:
                 fo = o.Shape.getElement(elem)
                 n = []
                 if fo.ShapeType == 'Face':
-                    print '  Face Support (fixed face) on: ', elem
+                    # print '  Face Support (fixed face) on: ', elem
                     n = self.mesh_object.FemMesh.getNodesByFace(fo)
                 elif fo.ShapeType == 'Edge':
-                    print '  Line Support (fixed edge) on: ', elem
+                    # print '  Line Support (fixed edge) on: ', elem
                     n = self.mesh_object.FemMesh.getNodesByEdge(fo)
                 elif fo.ShapeType == 'Vertex':
-                    print '  Point Support (fixed vertex) on: ', elem
+                    # print '  Point Support (fixed vertex) on: ', elem
                     n = self.mesh_object.FemMesh.getNodesByVertex(fo)
                 for i in n:
                     f.write(str(i) + ',\n')
@@ -129,24 +135,25 @@ class inp_writer:
         f.write('** written by {} function\n'.format(sys._getframe().f_code.co_name))
         for fobj in self.force_objects:
             frc_obj = fobj['Object']
-            print frc_obj.Name
+            # print frc_obj.Name
             f.write('*NSET,NSET=' + frc_obj.Name + '\n')
             NbrForceNodes = 0
             for o, elem in frc_obj.References:
                 fo = o.Shape.getElement(elem)
                 n = []
                 if fo.ShapeType == 'Edge':
-                    print '  Line Load (edge load) on: ', elem
+                    # print '  Line Load (edge load) on: ', elem
                     n = self.mesh_object.FemMesh.getNodesByEdge(fo)
                 elif fo.ShapeType == 'Vertex':
-                    print '  Point Load (vertex load) on: ', elem
+                    # print '  Point Load (vertex load) on: ', elem
                     n = self.mesh_object.FemMesh.getNodesByVertex(fo)
                 for i in n:
                     f.write(str(i) + ',\n')
                     NbrForceNodes = NbrForceNodes + 1   # NodeSum of mesh-nodes of ALL reference shapes from force_object
             # calculate node load
             if NbrForceNodes == 0:
-                print 'No Line Loads or Point Loads in the model'
+                pass
+                # print 'No Line Loads or Point Loads in the model'
             else:
                 fobj['NodeLoad'] = (frc_obj.Force) / NbrForceNodes
                 #  FIXME this method is incorrect, but we don't have anything else right now
@@ -232,15 +239,15 @@ class inp_writer:
                 if elem_o.ShapeType == 'Face':
                     sum_ref_face_area += elem_o.Area
             if sum_ref_face_area != 0:
-                print frc_obj.Name, ', AreaLoad on faces, CLOAD is used'
+                # print frc_obj.Name, ', AreaLoad on faces, CLOAD is used'
                 force_per_sum_ref_face_area = frc_obj.Force / sum_ref_face_area
-                print '  force_per_sum_ref_face_area: ', force_per_sum_ref_face_area
+                # print '  force_per_sum_ref_face_area: ', force_per_sum_ref_face_area
 
             for o, elem in frc_obj.References:
                 elem_o = o.Shape.getElement(elem)
                 if elem_o.ShapeType == 'Face':
                     ref_face = elem_o
-                    print '  ', o.Name, '.', elem,
+                    # print '  ', o.Name, '.', elem,
                     f.write('** ' + frc_obj.Name + '\n')
                     f.write('*CLOAD\n')
                     f.write('** node loads on element face: ' + o.Name + '.' + elem + '\n')
@@ -323,7 +330,7 @@ class inp_writer:
                     for n in node_sumarea_table:
                         # print n, ' --> ', node_sumarea_table[n]
                         sum_node_areas = sum_node_areas + node_sumarea_table[n]
-                    print '    sum_node_areas ', sum_node_areas, ' ref_face.Area: ', ref_face.Area
+                    # print '    sum_node_areas ', sum_node_areas, ' ref_face.Area: ', ref_face.Area
                     sum_ref_face_node_area += sum_node_areas
 
                     # write CLOAD lines to CalculiX file
