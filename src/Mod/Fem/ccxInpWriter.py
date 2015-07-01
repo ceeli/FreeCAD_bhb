@@ -59,21 +59,23 @@ class inp_writer:
         f.write('\n***********************************************************\n')
         f.write('** Element sets for materials\n')
         f.write('** written by {} function\n'.format(sys._getframe().f_code.co_name))
+        remaining_material = None
+        all_material = False
         e_count = 0
+        e_used = []
         for m in self.material_objects:
             mat_obj = m['Object']
             mat_obj_name = mat_obj.Name
             mat_name = mat_obj.Material['Name'][:80]
-
-            # checks done in MechanicalAnalysis --> User gets informed befor writing the mesh!!!
-
-            print mat_obj_name, ':  ', mat_name
-            f.write('*ELSET,ELSET=' + mat_obj_name + '\n')
+            print mat_obj_name, ':  ', mat_name, ':  ', mat_obj.MaterialShapes 
             if mat_obj.MaterialShapes == 'all':
+                all_material = True
+                f.write('*ELSET,ELSET=' + mat_obj_name + '\n')
                 f.write('Eall\n')
             elif mat_obj.MaterialShapes == 'remaining':
-                pass # wie komme ich an alle elementnummern, die nicht in anderen Matelsets geschrieben?!?
+                remaining_material = mat_obj
             elif mat_obj.MaterialShapes == 'referenced':
+                f.write('*ELSET,ELSET=' + mat_obj_name + '\n')
                 for s in mat_obj.Reference:
                     n = []
                     e = []
@@ -85,12 +87,18 @@ class inp_writer:
                         print '  Only solids are supported by now!'
                     for i in e:
                         f.write(str(i) + ',\n')
-                    e_count = e_count + len(e)
-            f.write('\n\n')
-        if e_count != len(elementtable):
-            print 'elementtable != e_count'
-            print e_count
-            print len(elementtable)
+                    e_count += len(e)
+                    e_used += e
+        if remaining_material:
+            f.write('*ELSET,ELSET=' + mat_obj_name + '\n')
+            # elementtabel - e_used schreiben
+            # Anzahal geschriebene zu e_caunt addieren
+        f.write('\n\n')
+        if not all_material:
+            if e_count != len(elementtable):
+                print 'elementtable != e_count'
+                print e_count
+                print len(elementtable)
 
     def write_fixed_node_sets(self, f):
         f.write('\n***********************************************************\n')
