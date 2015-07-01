@@ -54,11 +54,19 @@ class _CommandMechanicalMaterial:
                 'ToolTip': QtCore.QT_TRANSLATE_NOOP("Fem_Material", "Creates or edit the mechanical material definition.")}
 
     def Activated(self):
-        FreeCAD.ActiveDocument.openTransaction("Create Material")
-        FreeCADGui.addModule("MechanicalMaterial")
-        FreeCADGui.doCommand("MechanicalMaterial.makeMechanicalMaterial('MechanicalMaterial')")
-        FreeCADGui.doCommand("App.activeDocument()." + FemGui.getActiveAnalysis().Name + ".Member = App.activeDocument()." + FemGui.getActiveAnalysis().Name + ".Member + [App.ActiveDocument.ActiveObject]")
-        FreeCADGui.doCommand("Gui.activeDocument().setEdit(App.ActiveDocument.ActiveObject.Name,0)")
+        mat_objs = []
+        for i in FemGui.getActiveAnalysis().Member:
+            if i.isDerivedFrom("App::MaterialObject"):
+                    mat_objs.append(i)
+
+        if len(mat_objs) == 1 and mat_objs[0].MaterialShapes == 'all':
+            FreeCADGui.doCommand("Gui.activeDocument().setEdit('" + mat_objs[0].Name + "',0)")
+        else:
+            FreeCAD.ActiveDocument.openTransaction("Create Material")
+            FreeCADGui.addModule("MechanicalMaterial")
+            FreeCADGui.doCommand("MechanicalMaterial.makeMechanicalMaterial('MechanicalMaterial')")
+            FreeCADGui.doCommand("App.activeDocument()." + FemGui.getActiveAnalysis().Name + ".Member = App.activeDocument()." + FemGui.getActiveAnalysis().Name + ".Member + [App.ActiveDocument.ActiveObject]")
+            FreeCADGui.doCommand("Gui.activeDocument().setEdit(App.ActiveDocument.ActiveObject.Name,0)")
 
     def IsActive(self):
         if FemGui.getActiveAnalysis():
@@ -132,9 +140,11 @@ class _MechanicalMaterialTaskPanel:
         QtCore.QObject.connect(self.form.cb_material_shapes, QtCore.SIGNAL("currentIndexChanged(int)"), self.set_material_shapes_classification)
         QtCore.QObject.connect(self.form.pushButton_Reference, QtCore.SIGNAL("clicked()"), self.add_reference)
         self.form.list_References.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.form.list_References.connect(self.form.list_References, QtCore.SIGNAL("customContextMenuRequested(QPoint)" ), self.list_item_right_clicked)
+        self.form.list_References.connect(self.form.list_References, QtCore.SIGNAL("customContextMenuRequested(QPoint)" ), self.reference_list_right_clicked)
 
         self.previous_material = self.obj.Material
+        self.previous_reference = self.obj.Reference
+        self.previous_materialshapes = self.obj.MaterialShapes
         self.import_materials()
         previous_mat_path = self.get_material_path(self.previous_material)
         if not previous_mat_path:
@@ -168,8 +178,11 @@ class _MechanicalMaterialTaskPanel:
     def accept(self):
         self.obj.Reference = self.references
         self.obj.MaterialShapes = self.mat_shapes_classification
-        check_material_shape_classification()  # TODO if Fals is returned accept should not be allowed
-        FreeCADGui.ActiveDocument.resetEdit()
+        if  self.check_material_shape_classification():
+            FreeCADGui.ActiveDocument.resetEdit()
+            return
+        self.obj.Reference = self.previous_reference
+        self.obj.MaterialShapes = self.previous_materialshapes
 
     def reject(self):
         self.obj.Material = self.previous_material
@@ -285,15 +298,17 @@ class _MechanicalMaterialTaskPanel:
 
     def set_material_shapes_classification(self,index):
         if index == 0:
+            self.form.l_all.setText('all shapes of the model use this material')
             self.mat_shapes_classification = 'all'
             self.references = []
         elif index == 1:
+            self.form.l_remaining.setText('all not referenced shapes of the model use this material')
             self.mat_shapes_classification = 'remaining'
             self.references = []
         elif index == 2:
             self.mat_shapes_classification = 'referenced'
 
-    def list_item_right_clicked(self, QPos):
+    def reference_list_right_clicked(self, QPos):
         self.form.contextMenu = QtGui.QMenu()
         menu_item = self.form.contextMenu.addAction("Remove Reference")
         if len(self.references) == 0:
@@ -342,33 +357,27 @@ class _MechanicalMaterialTaskPanel:
         for listItemName in sorted(items):
             listItem = QtGui.QListWidgetItem(listItemName, self.form.list_References)
 
-
-
-# Helpers
-def check_material_shape_classification(Analysis=None):
-    if Analysis is None:
-        analysis_members = FemGui.getActiveAnalysis().Member
-    else:
-        analysis_members = FemGui.Analysis().Member
-    materials = []
-    for am in analysis_members:
-        if am.isDerivedFrom("App::MaterialObjectPython"):
-            materials.append(am)
-    remaining_material = False
-    for m in materials:
-        if m.MaterialShapes == 'all' and len(materials) > 1:
-            print 'ERROR: if MaterialShapes is set to all only one material is allowed'
-            return False
-        elif m.MaterialShapes == 'remaining' and remaining_material == False:
-            remaining_material = True
-            continue # jump to next m in materials
-        elif m.MaterialShapes == 'remaining' and remaining_material == True:
-            print 'ERROR: MaterialShapes is set to remaining for mor than one material'
-            return False
-        elif m.MaterialShapes == 'referenced' and len(m.Reference) == 0:
-            print 'ERROR: At least one material has an empty reference list'
-            return False
-    return True
+    def check_material_shape_classification(self):
+        analysis_members = self.obj.InList[0].Member
+        materials = []
+        for am in analysis_members:
+            if am.isDerivedFrom("App::MaterialObjectPython"):
+                materials.append(am)
+        remaining_material = False
+        for m in materials:
+            if m.MaterialShapes == 'all' and len(materials) > 1:
+                QtGui.QMessageBox.critical(None, "Wrong materials", "If MaterialShapes of a material is set to 'all' only one material should be used")
+                return False
+            elif m.MaterialShapes == 'remaining' and remaining_material == False:
+                remaining_material = True
+                continue # jump to next m in materials
+            elif m.MaterialShapes == 'remaining' and remaining_material == True:
+                QtGui.QMessageBox.critical(None, "Wrong materials", "MaterialShapes is set to 'remaining' for mor than one material")
+                return False
+            elif m.MaterialShapes == 'referenced' and len(m.Reference) == 0:
+                QtGui.QMessageBox.critical(None, "Wrong materials", "At least one material has an empty reference list")
+                return False
+        return True
 
 
 
