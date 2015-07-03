@@ -34,6 +34,8 @@ __author__ = "Juergen Riegel"
 __url__ = "http://www.freecadweb.org"
 
 material_shapes = ['all' ,'remaining' ,'referenced']
+sel_ref_sh = None
+
 
 def makeMechanicalMaterial(name):
     '''makeMaterial(name): makes an Material
@@ -330,7 +332,16 @@ class _MechanicalMaterialTaskPanel:
 
     def add_reference(self):
         '''
-        # aktuell solid markieren und button druecken 
+        called if Button add_reference is triggered
+        select the solid or an element of a solid and press the button addReference
+        TODO implement an SelectionObserver to archieve the following behavior
+             press addReference --> select solid by solid by solid without pressing addReference each time
+             see 
+             http://www.freecadweb.org/wiki/index.php?title=Code_snippets#Function_resident_with_the_mouse_click_action
+             ArchSurvey --> ArchCommands --> class _SurveyObserver
+        '''
+
+        '''
         selection = FreeCADGui.Selection.getSelection()
         if len(selection) == 1:
             sel = selection[0]
@@ -352,6 +363,7 @@ class _MechanicalMaterialTaskPanel:
         # observer starten, dieser erwartet eingabe
         print 'try to start the observer'
         ReferenceShapeSelectionObserver() # erzeugt instanz meiner observerklasse
+        print 'my selected shape mit globaler var: ', sel_ref_sh
         return
 
 
@@ -395,7 +407,7 @@ class ReferenceShapeSelectionObserver:
         self.selected_ref_shape = None
         FreeCADGui.Selection.addObserver(self)
         FreeCAD.Console.PrintMessage("Select an Solid\n")
-    
+
     def addSelection(self, doc, obj, sub, pos):
         sel = FreeCAD.getDocument(doc).getObject(obj)
         if hasattr(sel,"Shape"):
@@ -404,6 +416,8 @@ class ReferenceShapeSelectionObserver:
                 # we have our selection --> remove the observer
                 FreeCADGui.Selection.removeObserver(self)
                 self.selected_ref_shape = sel
+                # ja und wie zureuckgeben?!
+                sel_ref_sh = sel
 
                 #if sel not in self.references:
                 #    self.references.append(sel)
@@ -414,7 +428,7 @@ class ReferenceShapeSelectionObserver:
             print 'No shape found!'
 
         #return self.selected_ref_shape  # mhh aber habe eine instanz erzeugt, kann die was zurueckgeben
-        
+
         # aktuell remove ich den observer und er wird nur auf klick auf addReference weider gestarted :-(
         # das will ich ja grade nicht ich will solid fuer solik anklicken und der observer soll erst 
         # bei klick auf andere funktion removed werden, aber wenigstens wird der solid nach dem klick auf button genommen. 
