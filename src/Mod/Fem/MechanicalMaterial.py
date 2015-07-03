@@ -329,7 +329,7 @@ class _MechanicalMaterialTaskPanel:
         self.rebuild_list_References()
 
     def add_reference(self):
-        # observer --> siehe rebar zeile 127 bis 130 es hat einen observer der eingabe erwartet
+        '''
         # aktuell solid markieren und button druecken 
         selection = FreeCADGui.Selection.getSelection()
         if len(selection) == 1:
@@ -337,8 +337,8 @@ class _MechanicalMaterialTaskPanel:
         else:
             print 'Select one Solid and click on the add Referenc Button to add the shape!'   # selecting more solids --> observer
             return
-        if hasattr(sel,"Shape"):                   # isDerivedFrom would be better !
-            if sel.Shape.ShapeType == 'Solid':     # l auch faces fuer shell
+        if hasattr(sel,"Shape"):
+            if sel.Shape.ShapeType == 'Solid':     # TODO faces for shell elements
                 #print 'Found a solid: ', sel.Name
                 if sel not in self.references:
                     self.references.append(sel)
@@ -348,6 +348,12 @@ class _MechanicalMaterialTaskPanel:
         else:
             print 'No shape found!'
             return
+        '''
+        # observer starten, dieser erwartet eingabe
+        print 'try to start the observer'
+        ReferenceShapeSelectionObserver() # erzeugt instanz meiner observerklasse
+        return
+
 
     def rebuild_list_References(self):
         self.form.list_References.clear()
@@ -378,6 +384,41 @@ class _MechanicalMaterialTaskPanel:
                 QtGui.QMessageBox.critical(None, "Wrong materials", "At least one material has an empty reference list")
                 return False
         return True
+
+
+
+class ReferenceShapeSelectionObserver:
+    """ReferenceShapeSelectionObserver
+       started bei click auf button addrefference, da dort instanz dieses observers erzeugt wird"""
+    def __init__(self):
+        print 'konstruktor des observers'
+        self.selected_ref_shape = None
+        FreeCADGui.Selection.addObserver(self)
+        FreeCAD.Console.PrintMessage("Select an Solid\n")
+    
+    def addSelection(self, doc, obj, sub, pos):
+        sel = FreeCAD.getDocument(doc).getObject(obj)
+        if hasattr(sel,"Shape"):
+            if sel.Shape.ShapeType == 'Solid':     # TODO faces for shell elements
+                print 'The observer found a solid: ', sel, ' --> ', type(sel)
+                # we have our selection --> remove the observer
+                FreeCADGui.Selection.removeObserver(self)
+                self.selected_ref_shape = sel
+
+                #if sel not in self.references:
+                #    self.references.append(sel)
+                #    self.rebuild_list_References()
+                #else:
+                #    print sel.Name, ' is allready in reference list!'
+        else:
+            print 'No shape found!'
+
+        #return self.selected_ref_shape  # mhh aber habe eine instanz erzeugt, kann die was zurueckgeben
+        
+        # aktuell remove ich den observer und er wird nur auf klick auf addReference weider gestarted :-(
+        # das will ich ja grade nicht ich will solid fuer solik anklicken und der observer soll erst 
+        # bei klick auf andere funktion removed werden, aber wenigstens wird der solid nach dem klick auf button genommen. 
+
 
 
 
