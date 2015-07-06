@@ -132,7 +132,9 @@ class _ViewProviderMechanicalMaterial:
 class _MechanicalMaterialTaskPanel:
     '''The editmode TaskPanel for MechanicalMaterial objects'''
     def __init__(self, obj):
+        FreeCADGui.Selection.clearSelection()
         self.obj = obj
+        self.sel_server = None
 
         self.form = FreeCADGui.PySideUic.loadUi(FreeCAD.getHomePath() + "Mod/Fem/MechanicalMaterial.ui")
         QtCore.QObject.connect(self.form.pushButton_MatWeb, QtCore.SIGNAL("clicked()"), self.goMatWeb)
@@ -178,6 +180,8 @@ class _MechanicalMaterialTaskPanel:
 
 
     def accept(self):
+        if self.sel_server:
+            FreeCADGui.Selection.removeObserver(self.sel_server)
         self.obj.Reference = self.references
         self.obj.MaterialShapes = self.mat_shapes_classification
         if  self.check_material_shape_classification():
@@ -187,6 +191,9 @@ class _MechanicalMaterialTaskPanel:
         self.obj.MaterialShapes = self.previous_materialshapes
 
     def reject(self):
+        if self.sel_server:
+            FreeCADGui.Selection.removeObserver(self.sel_server)
+        FreeCADGui.Selection.removeObserver(self.sel_server)
         self.obj.Material = self.previous_material
         #print "Reverting to material:"
         #self.print_mat_data(self.previous_material)
@@ -331,26 +338,26 @@ class _MechanicalMaterialTaskPanel:
         self.rebuild_list_References()
 
     def add_reference(self):
-        '''
-        called if Button add_reference is triggered
-        select the solid or an element of a solid and press the button addReference
-        TODO implement an SelectionObserver to archieve the following behavior
-             press addReference --> select solid by solid by solid without pressing addReference each time
-             see 
-             http://www.freecadweb.org/wiki/index.php?title=Code_snippets#Function_resident_with_the_mouse_click_action
-             ArchSurvey --> ArchCommands --> class _SurveyObserver
-        '''
-
-        '''
+        '''called if Button add_reference is triggered'''
+        # see other constriants !!! Observer is imediately started if taskpanel is opened!!!
         selection = FreeCADGui.Selection.getSelection()
         if len(selection) == 1:
+            # print 'Try to add selected object'
             sel = selection[0]
+            self.selectionParser(sel)
+        elif len(selection) == 0:
+            # if button is triggered the material is selected watch selection view !
+            # click in empty space is needed !
+            # print 'Try to start SelectionObserver'
+            self.sel_server = ReferenceShapeSelectionObserver(self.selectionParser)  # parse widget
         else:
-            print 'Select one Solid and click on the add Referenc Button to add the shape!'   # selecting more solids --> observer
-            return
+            print 'Selecting before button click --> multiple solid selecting is not supported!'
+            print 'Selecting after button click --> multiple solid selecting will work!'
+
+    def selectionParser(self, sel):
         if hasattr(sel,"Shape"):
-            if sel.Shape.ShapeType == 'Solid':     # TODO faces for shell elements
-                #print 'Found a solid: ', sel.Name
+            if sel.Shape.ShapeType == 'Solid':     # TODO faces for shells and edges for beams
+                #print 'found solid: ', sel, '  ', sel.Name
                 if sel not in self.references:
                     self.references.append(sel)
                     self.rebuild_list_References()
@@ -358,14 +365,6 @@ class _MechanicalMaterialTaskPanel:
                     print sel.Name, ' is allready in reference list!'
         else:
             print 'No shape found!'
-            return
-        '''
-        # observer starten, dieser erwartet eingabe
-        print 'try to start the observer'
-        ReferenceShapeSelectionObserver() # erzeugt instanz meiner observerklasse
-        print 'my selected shape mit globaler var: ', sel_ref_sh
-        return
-
 
     def rebuild_list_References(self):
         self.form.list_References.clear()
@@ -401,38 +400,15 @@ class _MechanicalMaterialTaskPanel:
 
 class ReferenceShapeSelectionObserver:
     """ReferenceShapeSelectionObserver
-       started bei click auf button addrefference, da dort instanz dieses observers erzeugt wird"""
-    def __init__(self):
-        print 'konstruktor des observers'
-        self.selected_ref_shape = None
+       started on click  button addReference"""
+    def __init__(self, parseSelectionFunction):
+        self.parseSelectionFunction = parseSelectionFunction 
         FreeCADGui.Selection.addObserver(self)
-        FreeCAD.Console.PrintMessage("Select an Solid\n")
+        # FreeCAD.Console.PrintMessage("Select Solids to add them to the list\n")
 
-    def addSelection(self, doc, obj, sub, pos):
-        sel = FreeCAD.getDocument(doc).getObject(obj)
-        if hasattr(sel,"Shape"):
-            if sel.Shape.ShapeType == 'Solid':     # TODO faces for shell elements
-                print 'The observer found a solid: ', sel, ' --> ', type(sel)
-                # we have our selection --> remove the observer
-                FreeCADGui.Selection.removeObserver(self)
-                self.selected_ref_shape = sel
-                # ja und wie zureuckgeben?!
-                sel_ref_sh = sel
-
-                #if sel not in self.references:
-                #    self.references.append(sel)
-                #    self.rebuild_list_References()
-                #else:
-                #    print sel.Name, ' is allready in reference list!'
-        else:
-            print 'No shape found!'
-
-        #return self.selected_ref_shape  # mhh aber habe eine instanz erzeugt, kann die was zurueckgeben
-
-        # aktuell remove ich den observer und er wird nur auf klick auf addReference weider gestarted :-(
-        # das will ich ja grade nicht ich will solid fuer solik anklicken und der observer soll erst 
-        # bei klick auf andere funktion removed werden, aber wenigstens wird der solid nach dem klick auf button genommen. 
-
+    def addSelection(self, docName, objName, sub, pos):
+        self.added_obj = FreeCAD.getDocument(docName).getObject(objName)
+        self.parseSelectionFunction(self.added_obj)
 
 
 
