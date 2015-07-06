@@ -34,8 +34,6 @@ __author__ = "Juergen Riegel"
 __url__ = "http://www.freecadweb.org"
 
 material_shapes = ['all' ,'remaining' ,'referenced']
-sel_ref_sh = None
-
 
 def makeMechanicalMaterial(name):
     '''makeMaterial(name): makes an Material
@@ -133,8 +131,8 @@ class _MechanicalMaterialTaskPanel:
     '''The editmode TaskPanel for MechanicalMaterial objects'''
     def __init__(self, obj):
         FreeCADGui.Selection.clearSelection()
-        self.obj = obj
         self.sel_server = None
+        self.obj = obj
 
         self.form = FreeCADGui.PySideUic.loadUi(FreeCAD.getHomePath() + "Mod/Fem/MechanicalMaterial.ui")
         QtCore.QObject.connect(self.form.pushButton_MatWeb, QtCore.SIGNAL("clicked()"), self.goMatWeb)
@@ -193,7 +191,6 @@ class _MechanicalMaterialTaskPanel:
     def reject(self):
         if self.sel_server:
             FreeCADGui.Selection.removeObserver(self.sel_server)
-        FreeCADGui.Selection.removeObserver(self.sel_server)
         self.obj.Material = self.previous_material
         #print "Reverting to material:"
         #self.print_mat_data(self.previous_material)
