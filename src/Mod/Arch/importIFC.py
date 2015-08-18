@@ -25,7 +25,7 @@ __title__ =  "FreeCAD IFC importer - Enhanced ifcopenshell-only version"
 __author__ = "Yorik van Havre","Jonathan Wiedemann"
 __url__ =    "http://www.freecadweb.org"
 
-import os,time,tempfile,uuid,FreeCAD,Part,Draft,Arch,math,DraftVecUtils
+import os,time,tempfile,uuid,FreeCAD,Part,Draft,Arch,math,DraftVecUtils,sys
 
 DEBUG = False
 
@@ -332,6 +332,7 @@ def insert(filename,docname,skip=[],only=[],root=None):
         return
 
     if DEBUG: print "Opening ",filename,"...",
+    sys.stdout.flush()
     try:
         doc = FreeCAD.getDocument(docname)
     except:
@@ -339,6 +340,7 @@ def insert(filename,docname,skip=[],only=[],root=None):
     FreeCAD.ActiveDocument = doc
 
     if DEBUG: print "done."
+    sys.stdout.flush()
 
     global ROOT_ELEMENT
     if root:
@@ -363,6 +365,7 @@ def insert(filename,docname,skip=[],only=[],root=None):
     materials = ifcfile.by_type("IfcMaterial")
 
     if DEBUG: print "Building relationships table...",
+    sys.stdout.flush()
 
     # building relations tables
     objects = {} # { id:object, ... }
@@ -375,14 +378,33 @@ def insert(filename,docname,skip=[],only=[],root=None):
     structshapes = {} # { id:shaoe } only used for merge mode
     mattable = {} # { objid:matid }
     sharedobjects = {} # { representationmapid:object }
+
+    if DEBUG: print "additions table...",
+    sys.stdout.flush()
+    timestart = time.clock()
     for r in ifcfile.by_type("IfcRelContainedInSpatialStructure"):
         additions.setdefault(r.RelatingStructure.id(),[]).extend([e.id() for e in r.RelatedElements])
     for r in ifcfile.by_type("IfcRelAggregates"):
         additions.setdefault(r.RelatingObject.id(),[]).extend([e.id() for e in r.RelatedObjects])
+    if DEBUG: print "done in seconds: ", time.clock() - timestart
+
+    timestart = time.clock()
+    if DEBUG: print "groups table...",
+    sys.stdout.flush()
     for r in ifcfile.by_type("IfcRelAssignsToGroup"):
         groups.setdefault(r.RelatingGroup.id(),[]).extend([e.id() for e in r.RelatedObjects])
+    if DEBUG: print "done in seconds: ", time.clock() - timestart
+
+    timestart = time.clock()
+    if DEBUG: print "subtractions table...",
+    sys.stdout.flush()
     for r in ifcfile.by_type("IfcRelVoidsElement"):
         subtractions.append([r.RelatedOpeningElement.id(), r.RelatingBuildingElement.id()])
+    if DEBUG: print "done in seconds: ", time.clock() - timestart
+
+    timestart = time.clock()
+    if DEBUG: print "property table...",
+    sys.stdout.flush()
     for r in ifcfile.by_type("IfcRelDefinesByProperties"):
         for obj in r.RelatedObjects:
             if not obj.id() in properties :
@@ -393,16 +415,31 @@ def insert(filename,docname,skip=[],only=[],root=None):
                 prop.extend([e.id() for e in r.RelatingPropertyDefinition.HasProperties])
                 prop_by_category[r.RelatingPropertyDefinition.id()] = prop
                 properties[obj.id()].update(prop_by_category)
+    if DEBUG: print "done in seconds: ", time.clock() - timestart
+
+    timestart = time.clock()
+    if DEBUG: print "material table...",
+    sys.stdout.flush()
     for r in ifcfile.by_type("IfcRelAssociatesMaterial"):
         for o in r.RelatedObjects:
             mattable[o.id()] = r.RelatingMaterial.id()
+    if DEBUG: print "done in seconds: ", time.clock() - timestart
+
+    timestart = time.clock()
+    if DEBUG: print "color table...",
+    sys.stdout.flush()
+    print len(ifcfile.by_type("IfcStyledItem"))
     for r in ifcfile.by_type("IfcStyledItem"):
+        if DEBUG: print r
+        sys.stdout.flush()
         if r.Styles:
             if r.Styles[0].is_a("IfcPresentationStyleAssignment"):
                 if r.Styles[0].Styles[0].is_a("IfcSurfaceStyle"):
                     if r.Styles[0].Styles[0].Styles[0].is_a("IfcSurfaceStyleRendering"):
                         if r.Styles[0].Styles[0].Styles[0].SurfaceColour:
                             c = r.Styles[0].Styles[0].Styles[0].SurfaceColour
+                            if DEBUG: print '  ',c
+                            sys.stdout.flush()
                             if r.Item:
                                 for p in ifcfile.by_type("IfcProduct"):
                                     if hasattr(p,"Representation"):
@@ -420,7 +457,10 @@ def insert(filename,docname,skip=[],only=[],root=None):
                                     if it.Items:
                                         if it.Items[0].id() == r.id():
                                             colors[m.RepresentedMaterial.id()] = (c.Red,c.Green,c.Blue)
+    if DEBUG: print "done in sekonds: ", time.clock() - timestart
 
+    if DEBUG: print "only table...",
+    sys.stdout.flush()
     if only: # only import a list of IDs and their children
         ids = []
         while only:
@@ -429,6 +469,8 @@ def insert(filename,docname,skip=[],only=[],root=None):
             if currentid in additions.keys():
                 only.extend(additions[currentid])
         products = [ifcfile[currentid] for currentid in ids]
+    if DEBUG: print "done."
+    if DEBUG: print "All Relation tables are done."
 
     if DEBUG: print "done."
 
@@ -436,7 +478,10 @@ def insert(filename,docname,skip=[],only=[],root=None):
     from FreeCAD import Base
     progressbar = Base.ProgressIndicator()
     progressbar.start("Importing IFC objects...",len(products))
+
+    timestart = time.clock()
     if DEBUG: print "Processing objects..."
+    sys.stdout.flush()
 
     # products
     for product in products:
@@ -703,6 +748,9 @@ def insert(filename,docname,skip=[],only=[],root=None):
 
     progressbar.stop()
     FreeCAD.ActiveDocument.recompute()
+
+    if DEBUG: print "\nproducts import done in seconds: ", time.clock() - timestart
+    sys.stdout.flush()
 
     if MERGE_MODE_STRUCT == 2:
 
