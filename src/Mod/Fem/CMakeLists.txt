@@ -18,7 +18,11 @@ INSTALL(
 	mesh_volumes.csv
 	static_analysis.inp
 	frequency_analysis.inp
+        FemBeamSection.py
+        FemBeamSection.ui
         FemExample.py
+        FemShellThickness.py 
+        FemShellThickness.ui 
         MechanicalAnalysis.py
         MechanicalMaterial.py
         MechanicalMaterial.ui
