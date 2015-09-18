@@ -94,7 +94,7 @@ class inp_writer:
                             el = []
                             r = ref[0].Shape.getElement(ref[1])
                             if r.ShapeType == 'Edge':
-                                print '  BeamSectionReferenceEdge : ', ref[0].Name, ', ', ref[0].Label, ' --> ', ref[1]
+                                # print '  BeamSectionReferenceEdge : ', ref[0].Name, ', ', ref[0].Label, ' --> ', ref[1]
                                 no = self.mesh_object.FemMesh.getNodesByEdge(r)
                                 el = getFemElementsByNodes(self.fem_element_table, no)
                             else:
