@@ -70,8 +70,19 @@ def readResult(frd_input):
         if elements_found and (line[1:3] == "-1"):
             elem = int(line[4:13])
             elemType = int(line[14:18])
-        #then the 10 id's for the Tet10 element
-        if elements_found and (line[1:3] == "-2") and elemType == 6:
+        #then the id's for the elements
+        if elements_found and (line[1:3] == "-2") and elemType == 2:  # S3 but made by a S3 prism with 6 nodes
+            node_id_1 = int(line[3:13])
+            node_id_2 = int(line[13:23])
+            node_id_3 = int(line[23:33])
+            elements[elem] = (node_id_1, node_id_2, node_id_3)
+        elif elements_found and (line[1:3] == "-2") and elemType == 3:  # Tet4
+            node_id_2 = int(line[3:13])
+            node_id_1 = int(line[13:23])
+            node_id_3 = int(line[23:33])
+            node_id_4 = int(line[33:43])
+            elements[elem] = (node_id_1, node_id_2, node_id_3, node_id_4)
+        elif elements_found and (line[1:3] == "-2") and elemType == 6:  # Tet10
             node_id_2 = int(line[3:13])
             node_id_1 = int(line[13:23])
             node_id_3 = int(line[23:33])
@@ -129,7 +140,7 @@ def readResult(frd_input):
             elements_found = False
 
     frd_file.close()
-    return {'Nodes': nodes, 'Tet10Elem': elements, 'Results': results}
+    return {'Nodes': nodes, 'FemElements': elements, 'Results': results}
 
 
 def calculate_von_mises(i):
@@ -173,17 +184,22 @@ def importFrd(filename, Analysis=None):
             z_span = abs(p_z_max - p_z_min)
             span = max(x_span, y_span, z_span)
 
-        if ('Tet10Elem' in m) and ('Nodes' in m) and (not Analysis):
+        if ('FemElements' in m) and ('Nodes' in m) and (not Analysis):
             mesh = Fem.FemMesh()
             nds = m['Nodes']
 
             for i in nds:
                 n = nds[i]
                 mesh.addNode(n[0], n[1], n[2], i)
-            elms = m['Tet10Elem']
+            elms = m['FemElements']
             for i in elms:
                 e = elms[i]
-                mesh.addVolume([e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7], e[8], e[9]], i)
+                if len(e) == 3:
+                    mesh.addFace([e[0], e[1], e[2]], i)
+                elif len(e) == 4:
+                    mesh.addVolume([e[0], e[1], e[2], e[3]], i)
+                elif len(e) == 10:
+                    mesh.addVolume([e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7], e[8], e[9]], i)
             if len(nds) > 0:
                 MeshObject = FreeCAD.ActiveDocument.addObject('Fem::FemMeshObject', 'ResultMesh')
                 MeshObject.FemMesh = mesh
