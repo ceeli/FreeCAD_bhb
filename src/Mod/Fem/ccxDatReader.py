@@ -68,9 +68,9 @@ def readResult(dat_input):
                     reading_section = False
         if DISPLACEMENT_OUTPUT_SECTION in line:
             displacement_output_section_found = True
-            print ("Found DISPLACEMENT_OUTPUT_SECTION")
+            # print ("Found DISPLACEMENT_OUTPUT_SECTION")
         if displacement_output_section_found:
-            print line
+            # print line
             try:
                 nodeID = int(line[0:10])
                 disp_x = float(line[12:24])
@@ -126,6 +126,6 @@ def open(filename):
 
 '''
 import ccxDatReader
-#ccxDatReader.import_dat('/home/hugo/Desktop/CalculiX--Results/Plane_Mesh.dat')
-ccxDatReader.import_dat('/home/hugo/Desktop/CalculiX--Results/Mesh.dat')
+ccxDatReader.import_dat('/home/hugo/Desktop/CalculiX--Results/Plane_Mesh.dat')
+#ccxDatReader.import_dat('/home/hugo/Desktop/CalculiX--Results/Mesh.dat')
 '''
