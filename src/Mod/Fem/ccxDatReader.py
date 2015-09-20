@@ -31,14 +31,19 @@ EIGENVALUE_OUTPUT_SECTION = "     E I G E N V A L U E   O U T P U T"
 #PARTICIPATION_FACTORS_SECTION = "     P A R T I C I P A T I O N   F A C T O R S"
 #EFFECTIVE_MODAL_MASS_SECTION = "     E F F E C T I V E   M O D A L   M A S S"
 #TOTAL_EFFECTIVE_MASS_SECTION = "     T O T A L   E F F E C T I V E   M A S S"
-
+DISPLACEMENT_OUTPUT_SECTION = ' displacements (vx,vy,vz) for set '
+STRESS_OUTPUT_SECTION = ' stresses (elem, integ.pnt.,sxx,syy,szz,sxy,sxz,syz) for set '
 
 # read a calculix result file and extract the data
 def readResult(dat_input):
     dat_file = pyopen(dat_input, "r")
     eigenvalue_output_section_found = False
-    mode_reading = False
-    results = []
+    displacement_output_section_found = False
+    stess_output_section_found = False
+    reading_section = False
+    eigenmodes = []
+    node_displacements = {}
+    results = {}
 
     for line in dat_file:
         if EIGENVALUE_OUTPUT_SECTION in line:
@@ -54,15 +59,47 @@ def readResult(dat_input):
                 m = {}
                 m['eigenmode'] = mode
                 m['frequency'] = mode_frequency
-                results.append(m)
-                mode_reading = True
+                eigenmodes.append(m)
+                reading_section = True
             except:
-                if mode_reading:
-                    #print ("Conversion error after mode reading started, so it's the end of section")
+                if reading_section:
+                    #print ("Conversion error after reading section started, so it's the end of section")
                     eigenvalue_output_section_found = False
-                    mode_reading = False
-
+                    reading_section = False
+        if DISPLACEMENT_OUTPUT_SECTION in line:
+            displacement_output_section_found = True
+            print ("Found DISPLACEMENT_OUTPUT_SECTION")
+        if displacement_output_section_found:
+            print line
+            try:
+                nodeID = int(line[0:10])
+                disp_x = float(line[12:24])
+                disp_y = float(line[26:38])
+                disp_z = float(line[40:52])
+                node_displacements[nodeID] = [disp_x, disp_y, disp_z]
+                reading_section = True
+            except:
+                if reading_section:
+                    print ("Conversion error after reading_section started, so it's the end of section")
+                    displacement_output_section_found = False
+                    reading_section = False
+        '''
+        if STRESS_OUTPUT_SECTION in line:
+            stress_output_section_found = True
+            # print ("Found STRESS_OUTPUT_SECTION")
+        if displacement_output_section_found:
+            # print line
+            try:
+                pass
+            except:
+                if reading_section:
+                    print ("Conversion error after mode reading started, so it's the end of section")
+                    displacement_output_section_found = False
+                    reading_section = False
+        '''
     dat_file.close()
+    results['eigenmodes'] = eigenmodes
+    results['node_displacements'] = node_displacements
     return results
 
 
@@ -86,3 +123,9 @@ def open(filename):
     "called when freecad opens a file"
     docname = os.path.splitext(os.path.basename(filename))[0]
     insert(filename, docname)
+
+'''
+import ccxDatReader
+#ccxDatReader.import_dat('/home/hugo/Desktop/CalculiX--Results/Plane_Mesh.dat')
+ccxDatReader.import_dat('/home/hugo/Desktop/CalculiX--Results/Mesh.dat')
+'''
