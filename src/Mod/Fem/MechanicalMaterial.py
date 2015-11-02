@@ -109,10 +109,15 @@ class _ViewProviderMechanicalMaterial:
         return
 
     def setEdit(self, vobj, mode):
-        taskd = _MechanicalMaterialTaskPanel(self.Object)
-        taskd.obj = vobj.Object
-        FreeCADGui.Control.showDialog(taskd)
-        return True
+        print(FreeCADGui.ActiveDocument.getInEdit())
+        print(FreeCADGui.Control.activeDialog())
+        if not FreeCADGui.ActiveDocument.getInEdit():
+            taskd = _MechanicalMaterialTaskPanel(self.Object)
+            taskd.obj = vobj.Object
+            FreeCADGui.Control.showDialog(taskd)
+            return True
+        else:
+            print('There is an active ViewProvider in EditMode! Pleas close this one!')
 
     def unsetEdit(self, vobj, mode):
         FreeCADGui.Control.closeDialog()
