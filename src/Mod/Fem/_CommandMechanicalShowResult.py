@@ -52,7 +52,8 @@ class _CommandMechanicalShowResult(FemCommands):
         self.hide_parts_constraints_show_meshes()
 
         import _TaskPanelResultControl
-        taskd = _TaskPanelResultControl._TaskPanelResultControl()
+        taskd = _TaskPanelResultControl._TaskPanelResultControl(self.result_object)
+        taskd.obj = self.result_object
         FreeCADGui.Control.showDialog(taskd)
 
 

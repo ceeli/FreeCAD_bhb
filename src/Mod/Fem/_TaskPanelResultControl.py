@@ -38,7 +38,11 @@ if FreeCAD.GuiUp:
 
 class _TaskPanelResultControl:
     '''The control for the displacement post-processing'''
-    def __init__(self):
+    def __init__(self, result_object=None):
+        if result_object is not None:
+            self.result_object = result_object
+            print self.result_object.Name
+
         self.form = FreeCADGui.PySideUic.loadUi(FreeCAD.getHomePath() + "Mod/Fem/TaskPanelShowDisplacement.ui")
 
         #Connect Signals and Slots
@@ -196,7 +200,8 @@ class _TaskPanelResultControl:
 
     def update(self):
         self.MeshObject = None
-        self.result_object = get_results_object(FreeCADGui.Selection.getSelection())
+        if not hasattr(self, 'result_object'):
+            self.result_object = get_results_object(FreeCADGui.Selection.getSelection())
 
         for i in FemGui.getActiveAnalysis().Member:
             if i.isDerivedFrom("Fem::FemMeshObject"):
