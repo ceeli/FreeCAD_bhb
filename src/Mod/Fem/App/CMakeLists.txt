@@ -97,6 +97,7 @@ SET(FemScripts_SRCS
     _TaskPanelFemMeshRegion.py
     _TaskPanelFemShellThickness.py
     _TaskPanelFemSolverCalculix.py
+    _TaskPanelFemSolverZ88.py
     _TaskPanelFemMaterial.py
     _TaskPanelShowResult.py
     _ViewProviderFemBeamSection.py
@@ -147,6 +148,7 @@ SET(FemScripts_SRCS
     TaskPanelFemMeshRegion.ui
     TaskPanelFemShellThickness.ui
     TaskPanelFemSolverCalculix.ui
+    TaskPanelFemSolverZ88.ui
     TaskPanelFemMaterial.ui
     TaskPanelShowResult.ui
 )

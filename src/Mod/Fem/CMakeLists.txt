@@ -123,6 +123,8 @@ INSTALL(
         _FemSolverZ88.py
         _ViewProviderFemSolverZ88.py
         _CommandSolverZ88.py
+        _TaskPanelFemSolverZ88.py
+        TaskPanelFemSolverZ88.ui
 
         # additional imports and exports
         importVTKResults.py
