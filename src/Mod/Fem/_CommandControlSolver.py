@@ -40,7 +40,7 @@ class _CommandControlSolver(FemCommands):
                           'MenuText': QtCore.QT_TRANSLATE_NOOP("Fem_ControlSolver", "Solver job control"),
                           'Accel': "S, C",
                           'ToolTip': QtCore.QT_TRANSLATE_NOOP("Fem_ControlSolver", "Changes solver attributes and runs the calculations for the selected solver")}
-        self.is_active = 'with_solver'
+        self.is_active = 'with_one_solver'
 
     def Activated(self):
 

@@ -52,31 +52,35 @@ class _CommandRunSolver(FemCommands):
                 print ("CalculiX failed ccx finished with error {}".format(ret_code))
 
         sel = FreeCADGui.Selection.getSelection()
-        if len(sel) == 1 and sel[0].isDerivedFrom("Fem::FemSolverObjectPython"):
-            self.solver = sel[0]
-        if self.solver.SolverType == "FemSolverCalculix":
-            import FemToolsCcx
-            self.fea = FemToolsCcx.FemToolsCcx(None, self.solver)
-            self.fea.reset_mesh_purge_results_checked()
-            message = self.fea.check_prerequisites()
-            if message:
-                QtGui.QMessageBox.critical(None, "Missing prerequisite", message)
-                return
-            self.fea.finished.connect(load_results)
-            QtCore.QThreadPool.globalInstance().start(self.fea)
-        elif self.solver.SolverType == "FemSolverZ88":
-            import FemToolsZ88
-            self.fea = FemToolsZ88.FemToolsZ88(None, self.solver)
-            self.fea.reset_mesh_purge_results_checked()
-            message = self.fea.check_prerequisites()
-            if message:
-                QtGui.QMessageBox.critical(None, "Missing prerequisite", message)
-                return
-            self.fea.run()  # test z88
-            #self.fea.finished.connect(load_results)
-            #QtCore.QThreadPool.globalInstance().start(self.fea)
-        else:
-            QtGui.QMessageBox.critical(None, "Not known solver type", message)
+        # problem: for schleife wartet nicht bis ccx fertig ist
+        # zwei ccx parallel und results laden funktioniert irgendwie nicht
+        # wie warten mit naechsten schleifendurchlauf bis der aktuelle fertig ist?
+        for s in sel:
+            if s.isDerivedFrom("Fem::FemSolverObjectPython"):
+                self.solver = s
+            if self.solver.SolverType == "FemSolverCalculix":
+                import FemToolsCcx
+                self.fea = FemToolsCcx.FemToolsCcx(None, self.solver)
+                self.fea.reset_mesh_purge_results_checked()
+                message = self.fea.check_prerequisites()
+                if message:
+                    QtGui.QMessageBox.critical(None, "Missing prerequisite", message)
+                    return
+                self.fea.finished.connect(load_results)
+                QtCore.QThreadPool.globalInstance().start(self.fea)
+            elif self.solver.SolverType == "FemSolverZ88":
+                import FemToolsZ88
+                self.fea = FemToolsZ88.FemToolsZ88(None, self.solver)
+                self.fea.reset_mesh_purge_results_checked()
+                message = self.fea.check_prerequisites()
+                if message:
+                    QtGui.QMessageBox.critical(None, "Missing prerequisite", message)
+                    return
+                self.fea.run()  # test z88
+                #self.fea.finished.connect(load_results)
+                #QtCore.QThreadPool.globalInstance().start(self.fea)
+            else:
+                QtGui.QMessageBox.critical(None, "Not known solver type", message)
 
     def show_results_on_mesh(self):
         #FIXME proprer mesh refreshing as per FreeCAD.FEM_dialog settings required
