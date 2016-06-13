@@ -322,6 +322,7 @@ void ViewProviderFemPostObject::update3D() {
     WritePointData(points, normals, tcoords);
     bool ResetColorBarRange = true;
     WriteColorData(ResetColorBarRange);
+    Base::Console().Log("log update3D\n");
     WriteTransperency();
 
     // write out polys if any
@@ -415,6 +416,7 @@ void ViewProviderFemPostObject::WritePointData(vtkPoints* points, vtkDataArray* 
 
     m_coordinates->point.startEditing();
     m_coordinates->point.setNum(points->GetNumberOfPoints());
+    Base::Console().Log("   setNum: %f \n", points->GetNumberOfPoints());
     for (i = 0; i < points->GetNumberOfPoints(); i++) {
         p = points->GetPoint(i);
         m_coordinates->point.set1Value(i, p[0], p[1], p[2]);
@@ -454,6 +456,8 @@ void ViewProviderFemPostObject::WriteColorData(bool ResetColorBarRange) {
 
     int array = Field.getValue() - 1; //0 is none
     vtkPolyData*  pd = m_currentAlgorithm->GetOutput();
+    Base::Console().Log("log WriteColorData, begin \n");
+
     vtkDataArray* data = pd->GetPointData()->GetArray(array);
 
     int component = VectorMode.getValue() - 1; //0 is either "Not a vector" or magnitude, for -1 is correct for magnitude. x y and z are one number too high
@@ -462,10 +466,24 @@ void ViewProviderFemPostObject::WriteColorData(bool ResetColorBarRange) {
 
     //build the lookuptable
     if (ResetColorBarRange == true) {
+        float fMin = m_colorBar->getMinValue();
+        float fMax = m_colorBar->getMaxValue();
+        //float myfMin = 150;
+        //float myfMax = 200;
+        Base::Console().Log("   range 1: %f \n", fMax);
+        Base::Console().Log("   range 0: %f \n", fMin);
+
+        // get min max values of the data but this is needed only if Field is changed !
         double range[2];
         data->GetRange(range, component);
         m_colorBar->setRange(range[0], range[1]);
-    }
+
+        Base::Console().Log("\n");
+        Base::Console().Log("   component: %i \n", component);
+        Base::Console().Log("   range 1: %f \n", range[1]);
+        Base::Console().Log("   range 0: %f \n", range[0]);
+        //m_colorBar->setRange(range[0], range[1]);
+   }
 
     m_material->diffuseColor.startEditing();
 
@@ -528,10 +546,12 @@ void ViewProviderFemPostObject::onChanged(const App::Property* prop) {
     bool ResetColorBarRange = true;
     if(prop == &Field && setupPipeline()) {
         updateProperties();
+        Base::Console().Log("log onChanged\n");
         WriteColorData(ResetColorBarRange);
         WriteTransperency();
     } 
     else if(prop == &VectorMode && setupPipeline()) {
+        Base::Console().Log("log onChanged\n");
         WriteColorData(ResetColorBarRange);
         WriteTransperency();
     }
@@ -618,4 +638,5 @@ void ViewProviderFemPostObject::show(void) {
 void ViewProviderFemPostObject::OnChange(Base::Subject< int >& rCaller, int rcReason) {
     bool ResetColorBarRange = false;
     WriteColorData(ResetColorBarRange);
+    Base::Console().Log("log OnChange ohne d\n");
 }
