@@ -128,13 +128,6 @@ before_install:
                                libmedc-dev			\
                                asciidoc
 
-       #Install Eigen 3.3.3 to reduce compiler warnings
-       curl -L "http://bitbucket.org/eigen/eigen/get/3.3.3.tar.gz" | tar xvz && cd eigen-*
-       mkdir build && cd build
-       cmake -DCMAKE_C_FLAGS_RELEASE=-DNDEBUG -DCMAKE_CXX_FLAGS_RELEASE=-DNDEBUG -DCMAKE_BUILD_TYPE=Release -DCMAKE_VERBOSE_MAKEFILE=ON ..
-       sudo make -j2 install
-       cd ${TRAVIS_BUILD_DIR}
-
        #Install ccache to reduce successive build times (use 3.2.5+ to avoid spurious warnings)
        curl -L "https://codeload.github.com/ccache/ccache/tar.gz/v3.2.5" | tar xvz && cd ccache-*
        ./autogen.sh && ./configure CC=gcc && sudo make install
@@ -211,7 +204,6 @@ script:
 #  Install FreeCAD and run unit tests.  Test failures will fail the build
 ##
   - sudo make -j2 install
-  - ${INSTALLED_APP_PATH} --console --run-test 0
   - ${INSTALLED_APP_PATH} --log-file /tmp/FreeCAD_installed.log &
   - sleep 10 && pkill FreeCAD
   - cat /tmp/FreeCAD_installed.log
