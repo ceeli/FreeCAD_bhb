@@ -227,6 +227,7 @@ PyObject* FemMeshPy::addEdge(PyObject *args)
     SMESH_Mesh* mesh = getFemMeshPtr()->getSMesh();
     SMESHDS_Mesh* meshDS = mesh->GetMeshDS();
 
+    /*
     int n1,n2;
     if (!PyArg_ParseTuple(args, "ii",&n1,&n2))
         return 0;
@@ -246,6 +247,7 @@ PyObject* FemMeshPy::addEdge(PyObject *args)
         return 0;
     }
     PyErr_Clear();
+    */
 
     PyObject *obj;
     int ElementId=-1;
@@ -296,7 +298,6 @@ PyObject* FemMeshPy::addEdge(PyObject *args)
         return Py::new_reference_to(Py::Int(edge->GetID()));
     }
     PyErr_SetString(PyExc_TypeError, "addEdge accepts:\n"
-        "-- int,int\n"
         "-- [2|3],[int]\n");
     return 0;
 }
@@ -306,6 +307,7 @@ PyObject* FemMeshPy::addFace(PyObject *args)
     SMESH_Mesh* mesh = getFemMeshPtr()->getSMesh();
     SMESHDS_Mesh* meshDS = mesh->GetMeshDS();
 
+    /*
     int n1,n2,n3;
     if (PyArg_ParseTuple(args, "iii",&n1,&n2,&n3))
     {
@@ -327,6 +329,7 @@ PyObject* FemMeshPy::addFace(PyObject *args)
         }
     }
     PyErr_Clear();
+    */
 
     PyObject *obj;
     int ElementId=-1;
@@ -397,13 +400,13 @@ PyObject* FemMeshPy::addFace(PyObject *args)
         return Py::new_reference_to(Py::Int(face->GetID()));
     }
     PyErr_SetString(PyExc_TypeError, "addFace accepts:\n"
-        "-- int,int,int\n"
         "-- [3|4|6|8 int],[int]\n");
     return 0;
 }
 
 PyObject* FemMeshPy::addQuad(PyObject *args)
 {
+    /*
     int n1,n2,n3,n4;
     if (!PyArg_ParseTuple(args, "iiii",&n1,&n2,&n3,&n4))
         return 0;
@@ -426,6 +429,9 @@ PyObject* FemMeshPy::addQuad(PyObject *args)
         PyErr_SetString(Base::BaseExceptionFreeCADError, e.what());
         return 0;
     }
+    */
+    PyErr_SetString(PyExc_TypeError, "addQuad is deprecated, use addFace\n");
+    return 0;
 }
 
 PyObject* FemMeshPy::addVolume(PyObject *args)
@@ -433,6 +439,7 @@ PyObject* FemMeshPy::addVolume(PyObject *args)
     SMESH_Mesh* mesh = getFemMeshPtr()->getSMesh();
     SMESHDS_Mesh* meshDS = mesh->GetMeshDS();
 
+    /*
     int n1,n2,n3,n4;
     if (PyArg_ParseTuple(args, "iiii",&n1,&n2,&n3,&n4))
     {
@@ -454,6 +461,7 @@ PyObject* FemMeshPy::addVolume(PyObject *args)
         }
     }
     PyErr_Clear();
+    */
 
     PyObject *obj;
     int ElementId=-1;
@@ -560,7 +568,6 @@ PyObject* FemMeshPy::addVolume(PyObject *args)
         return Py::new_reference_to(Py::Int(vol->GetID()));
     }
     PyErr_SetString(PyExc_TypeError, "addVolume accepts:\n"
-        "-- int,int,int,int\n"
         "-- [4|5|6|8|10|13|15|20 int],[int]\n");
     return 0;
 }
