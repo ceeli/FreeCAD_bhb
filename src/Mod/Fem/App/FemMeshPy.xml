@@ -129,6 +129,11 @@
                 <UserDocu>Return a tuple of node IDs to a given element ID</UserDocu>
             </Documentation>
         </Methode>
+        <Methode Name="getGroupName" Const="true">
+            <Documentation>
+                <UserDocu>Return a string of group name to a given group ID</UserDocu>
+            </Documentation>
+        </Methode>
         <Attribute Name="Nodes" ReadOnly="true">
             <Documentation>
                 <UserDocu>Dictionary of Nodes by ID (int ID:Vector())</UserDocu>

@@ -36,6 +36,7 @@
 #include <Base/MatrixPy.h>
 #include <Base/PlacementPy.h>
 #include <Base/QuantityPy.h>
+#include <Base/Console.h>
 
 #include <Mod/Part/App/TopoShapePy.h>
 #include <Mod/Part/App/TopoShapeSolidPy.h>
@@ -896,6 +897,34 @@ PyObject* FemMeshPy::getElementNodes(PyObject *args)
         PyErr_SetString(Base::BaseExceptionFreeCADError, e->GetMessageString());
         return 0;
     }
+}
+
+PyObject* FemMeshPy::getGroupName(PyObject *args)
+{
+    Base::Console().Log("My getGroupName\n");
+    int id;
+    if (!PyArg_ParseTuple(args, "i", &id))
+         return 0;
+
+    Base::Console().Log(" Given ID: %i \n", id);
+
+    //std::list<int> resultSet = getFemMeshPtr()->getElementNodes(id);
+    //Py::Tuple ret(resultSet.size());
+    //int index = 0;
+    //for (std::list<int>::const_iterator it = resultSet.begin();it!=resultSet.end();++it)
+    //    ret.setItem(index++, Py::Int(*it));
+
+
+    SMESH_Group* myGroup = getFemMeshPtr()->getSMesh()->GetGroup(id);
+    //SMESH_Mesh::GroupIteratorPtr myGroupIterator = getFemMeshPtr()->getSMesh()->GetGroups();
+    //for (int i=0;myGroupIterator->more();i++){
+    //    //Base::Console().Log("Group iterateror i: %i \n", i);
+    //}
+    //std::string myGroupName = myGroup->GetName()
+    return Py::String(getFemMeshPtr()->getSMesh()->GetGroup(id)->GetName());
+
+
+    //return Py::new_reference_to(myGroupName);
 }
 
 
