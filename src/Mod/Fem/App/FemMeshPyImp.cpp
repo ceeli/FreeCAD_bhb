@@ -921,7 +921,9 @@ PyObject* FemMeshPy::getGroupName(PyObject *args)
     //    //Base::Console().Log("Group iterateror i: %i \n", i);
     //}
     //std::string myGroupName = myGroup->GetName()
-    return Py::String(getFemMeshPtr()->getSMesh()->GetGroup(id)->GetName());
+    
+    // will nicht funktionieren
+    //return Py::String(getFemMeshPtr()->getSMesh()->GetGroup(id)->GetName());
 
 
     //return Py::new_reference_to(myGroupName);
