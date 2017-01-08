@@ -123,6 +123,9 @@ INSTALL(
         _ViewProviderFemSolverZ88.py
         _CommandSolverZ88.py
 
+        # mesh Frame3DD
+        importFrame3DD.py
+
     DESTINATION
         Mod/Fem
 )

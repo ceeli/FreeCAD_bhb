@@ -40,3 +40,4 @@ FreeCAD.addImportType("Mesh from Calculix/Abaqus input file (*.inp)", "importInp
 FreeCAD.addImportType("Z88 mesh file (*.txt)", "importZ88Mesh")
 FreeCAD.addExportType("Z88 mesh file (*.txt)", "importZ88Mesh")
 FreeCAD.addImportType("Z88 displacement result file (*.txt)", "z88DispReader")
+FreeCAD.addExportType("Frame3DD file (*.3DD)", "importFrame3DD")

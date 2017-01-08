@@ -111,6 +111,7 @@ SET(FemScripts_SRCS
     ccxDatReader.py
     ccxFrdReader.py
     convert2TetGen.py
+    importFrame3DD.py
     importInpMesh.py
     importZ88Mesh.py
     Init.py
