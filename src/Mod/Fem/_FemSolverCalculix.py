@@ -66,10 +66,10 @@ class _FemSolverCalculix():
         obj.addProperty("App::PropertyEnumeration", "MaterialNonlinearity", "Fem", "Set material nonlinearity (needs geometrical nonlinearity)")
         obj.MaterialNonlinearity = choices_material_nonlinear
         obj.MaterialNonlinearity = choices_material_nonlinear[0]
-
-        obj.addProperty("App::PropertyIntegerConstraint", "EigenmodesCount", "Fem", "Number of modes for frequency calculations")
-        noe = ccx_prefs.GetInt("EigenmodesCount", 10)
-        obj.EigenmodesCount = (noe, 1, 100, 1)
+        
+        obj.addProperty("App::PropertyIntegerConstraint", "NumberEigenmodes", "Fem", "Number of modes for frequency calculations")
+        noe = ccx_prefs.GetInt("NumberEigenmodes", 10)
+        obj.NumberEigenmodes = (noe, 1, 100, 1)
 
         obj.addProperty("App::PropertyFloatConstraint", "EigenmodeLowLimit", "Fem", "Low frequency limit for eigenmode calculations")
         ell = ccx_prefs.GetFloat("EigenmodeLowLimit", 0.0)
@@ -78,6 +78,18 @@ class _FemSolverCalculix():
         obj.addProperty("App::PropertyFloatConstraint", "EigenmodeHighLimit", "Fem", "High frequency limit for eigenmode calculations")
         ehl = ccx_prefs.GetFloat("EigenmodeHighLimit", 1000000.0)
         obj.EigenmodeHighLimit = (ehl, 0.0, 1000000.0, 10000.0)
+
+        obj.addProperty("App::PropertyFloatConstraint","Accuracy", "Fem", "Accurency for buckling calculations")
+        acc = ccx_prefs.GetFloat("Accuracy", 0.01)
+        obj.Accuracy = (acc)
+
+        obj.addProperty("App.PropertyIntegerConstraint", "LanczosVect", "Fem", "Lanczos vector for buckling, normaly 4 times number buckling eignemodes")
+        lanczos = ccx_prefs.GetInt("LanczosVect", 40)  # since default eigne modes = 10
+        obj.LanczosVect(lanczos)
+
+        obj.addProperty("App::PropertyIntegerConstraint", "IterationsMaximum", "Fem", "Maximum Number of iterations in each time step before stopping jobs")
+        niter = ccx_prefs.GetInt("IterationsMaximum", 2000)
+        obj.IterationsMaximum = niter
 
         obj.addProperty("App::PropertyIntegerConstraint", "IterationsThermoMechMaximum", "Fem", "Maximum Number of thermo mechanical iterations in each time step before stopping jobs")
         niter = ccx_prefs.GetInt("AnalysisMaxIterations", 200)

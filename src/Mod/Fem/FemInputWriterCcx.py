@@ -109,7 +109,10 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
             self.write_constraints_transform(inpfile)
 
         # step begin
-        if self.analysis_type == "frequency":
+        if self.analysis_type == "buckle":
+            self.write_step_begin_static_frequency(inpfile)
+            self.write_analysis_buckle(inpfile)
+        elif self.analysis_type == "frequency":
             self.write_step_begin_static_frequency(inpfile)
             self.write_analysis_frequency(inpfile)
         elif self.analysis_type == "static":
@@ -125,6 +128,13 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
             self.write_constraints_displacement(inpfile)
 
         # constraints depend on step and depending on analysis type
+        elif self.analysis_type == "buckle":
+            if self.selfweight_objects:
+                self.write_constraints_selfweight(inpfile)
+            if self.force_objects:
+                self.write_constraints_force(inpfile)
+            if self.pressure_objects:
+                self.write_constraints_pressure(inpfile)
         if self.analysis_type == "frequency":
             pass
         elif self.analysis_type == "static":
@@ -254,7 +264,10 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
             self.write_constraints_transform(inpfileMain)
 
         # step begin
-        if self.analysis_type == "frequency":
+        if self.analysis_type == "buckle":
+            self.write_step_begin_static_frequency(inpfileMain)
+            self.write_analysis_buckle(inpfileMain)
+        elif self.analysis_type == "frequency":
             self.write_step_begin_static_frequency(inpfileMain)
             self.write_analysis_frequency(inpfileMain)
         elif self.analysis_type == "static":
@@ -270,7 +283,14 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
             self.write_constraints_displacement(inpfileMain)
 
         # constraints depend on step and depending on analysis type
-        if self.analysis_type == "frequency":
+        if self.analysis_type == "buckle":
+            if self.selfweight_objects:
+                self.write_constraints_selfweight(inpfileMain)
+            if self.force_objects:
+                self.write_constraints_force(inpfileForce)
+            if self.pressure_objects:
+                self.write_constraints_pressure(inpfilePressure)
+        elif self.analysis_type == "frequency":
             pass
         elif self.analysis_type == "static":
             if self.selfweight_objects:
@@ -626,6 +646,24 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
         f.write('** written by {} function\n'.format(sys._getframe().f_code.co_name))
         f.write('*FREQUENCY\n')
         f.write('{},{},{}\n'.format(self.solver_obj.EigenmodesCount, self.solver_obj.EigenmodeLowLimit, self.solver_obj.EigenmodeHighLimit))
+
+    
+    def write_analysis_buckle(self, f):
+        # First line:
+        #     *BUCKLE
+        # Second line:
+        #    Number of buckling factors desired (usually 1).
+        #    #Accuracy desired (default: 0.01).
+        #    Lanczos vectors calculated in each iteration (default: 4 * #eigenvalues).
+        #    Maximum # of iterations (default: 1000).
+        # according to FemSolverObject.cpp
+        #   // Attributes are implemented in the FemSolverObjectPython
+        f.write('\n***********************************************************\n')
+        f.write('** Buckling analysis\n')
+        f.write('** written by {} function\n'.format(sys._getframe().f_code.co_name))
+        f.write('*BUCKLE\n')
+        f.write('{},{},{},{}\n'.format(self.solver_obj.EigenmodesCount, self.solver_obj.Accuracy, self.solver_obj.LanczosVect, self.solver_obj.IterationsMaximum))
+
 
     def write_analysis_thermomech(self, f):
         f.write('\n***********************************************************\n')

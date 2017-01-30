@@ -37,7 +37,7 @@ if FreeCAD.GuiUp:
 
 class FemToolsCcx(FemTools.FemTools):
 
-    known_analysis_types = ["static", "frequency", "thermomech"]
+    known_analysis_types = ["static", "frequency", "buckle", "thermomech"]
     finished = QtCore.Signal(int)
 
     ## The constructor
