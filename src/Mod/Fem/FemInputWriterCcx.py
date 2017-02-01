@@ -649,20 +649,11 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
 
     
     def write_analysis_buckle(self, f):
-        # First line:
-        #     *BUCKLE
-        # Second line:
-        #    Number of buckling factors desired (usually 1).
-        #    #Accuracy desired (default: 0.01).
-        #    Lanczos vectors calculated in each iteration (default: 4 * #eigenvalues).
-        #    Maximum # of iterations (default: 1000).
-        # according to FemSolverObject.cpp
-        #   // Attributes are implemented in the FemSolverObjectPython
         f.write('\n***********************************************************\n')
         f.write('** Buckling analysis\n')
         f.write('** written by {} function\n'.format(sys._getframe().f_code.co_name))
         f.write('*BUCKLE\n')
-        f.write('{},{},{},{}\n'.format(self.solver_obj.EigenmodesCount, self.solver_obj.Accuracy, self.solver_obj.LanczosVect, self.solver_obj.IterationsMaximum))
+        f.write('{},{},{},{}\n'.format(self.solver_obj.EigenmodesNumber, self.solver_obj.Accuracy, self.solver_obj.LanczosVect, self.solver_obj.IterationsMaximum))
 
 
     def write_analysis_thermomech(self, f):

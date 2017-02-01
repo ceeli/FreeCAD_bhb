@@ -67,8 +67,8 @@ class _FemSolverCalculix():
         obj.MaterialNonlinearity = choices_material_nonlinear
         obj.MaterialNonlinearity = choices_material_nonlinear[0]
         
-        obj.addProperty("App::PropertyIntegerConstraint", "NumberEigenmodes", "Fem", "Number of modes for frequency calculations")
-        noe = ccx_prefs.GetInt("NumberEigenmodes", 10)
+        obj.addProperty("App::PropertyIntegerConstraint", "EigenmodesNumber", "Fem", "Number of modes for frequency calculations")
+        noe = ccx_prefs.GetInt("EigenmodesNumber", 10)
         obj.NumberEigenmodes = (noe, 1, 100, 1)
 
         obj.addProperty("App::PropertyFloatConstraint", "EigenmodeLowLimit", "Fem", "Low frequency limit for eigenmode calculations")
