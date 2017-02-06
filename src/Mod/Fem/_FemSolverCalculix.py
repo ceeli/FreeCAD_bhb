@@ -66,10 +66,10 @@ class _FemSolverCalculix():
         obj.addProperty("App::PropertyEnumeration", "MaterialNonlinearity", "Fem", "Set material nonlinearity (needs geometrical nonlinearity)")
         obj.MaterialNonlinearity = choices_material_nonlinear
         obj.MaterialNonlinearity = choices_material_nonlinear[0]
-        
+
         obj.addProperty("App::PropertyIntegerConstraint", "EigenmodesNumber", "Fem", "Number of modes for frequency calculations")
         noe = ccx_prefs.GetInt("EigenmodesNumber", 10)
-        obj.NumberEigenmodes = (noe, 1, 100, 1)
+        obj.EigenmodesNumber = (noe, 1, 100, 1)
 
         obj.addProperty("App::PropertyFloatConstraint", "EigenmodeLowLimit", "Fem", "Low frequency limit for eigenmode calculations")
         ell = ccx_prefs.GetFloat("EigenmodeLowLimit", 0.0)
@@ -79,13 +79,13 @@ class _FemSolverCalculix():
         ehl = ccx_prefs.GetFloat("EigenmodeHighLimit", 1000000.0)
         obj.EigenmodeHighLimit = (ehl, 0.0, 1000000.0, 10000.0)
 
-        obj.addProperty("App::PropertyFloatConstraint","Accuracy", "Fem", "Accurency for buckling calculations")
+        obj.addProperty("App::PropertyFloatConstraint", "Accuracy", "Fem", "Accurency for buckling calculations")
         acc = ccx_prefs.GetFloat("Accuracy", 0.01)
         obj.Accuracy = (acc)
 
-        obj.addProperty("App.PropertyIntegerConstraint", "LanczosVect", "Fem", "Lanczos vector for buckling, normaly 4 times number buckling eignemodes")
+        obj.addProperty("App::PropertyIntegerConstraint", "LanczosVect", "Fem", "Lanczos vector for buckling, normaly 4 times number buckling eignemodes")
         lanczos = ccx_prefs.GetInt("LanczosVect", 40)  # since default eigne modes = 10
-        obj.LanczosVect(lanczos)
+        obj.LanczosVect = lanczos
 
         obj.addProperty("App::PropertyIntegerConstraint", "IterationsMaximum", "Fem", "Maximum Number of iterations in each time step before stopping jobs")
         niter = ccx_prefs.GetInt("IterationsMaximum", 2000)

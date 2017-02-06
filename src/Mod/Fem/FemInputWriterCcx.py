@@ -645,7 +645,7 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
         f.write('** Frequency analysis\n')
         f.write('** written by {} function\n'.format(sys._getframe().f_code.co_name))
         f.write('*FREQUENCY\n')
-        f.write('{},{},{}\n'.format(self.solver_obj.EigenmodesCount, self.solver_obj.EigenmodeLowLimit, self.solver_obj.EigenmodeHighLimit))
+        f.write('{},{},{}\n'.format(self.solver_obj.EigenmodesNumber, self.solver_obj.EigenmodeLowLimit, self.solver_obj.EigenmodeHighLimit))
 
     
     def write_analysis_buckle(self, f):
