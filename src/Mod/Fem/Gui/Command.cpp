@@ -1167,7 +1167,7 @@ CmdFemPostCreateClipFilter::CmdFemPostCreateClipFilter()
     sToolTipText    = QT_TR_NOOP("Define/create a clip filter which uses functions to define the cliped region");
     sWhatsThis      = "FEM_PostCreateClipFilter";
     sStatusTip      = sToolTipText;
-    sPixmap         = "fem-clip";
+    sPixmap         = "fem-post-clip";
 }
 
 void CmdFemPostCreateClipFilter::activated(int)
@@ -1191,7 +1191,7 @@ CmdFemPostCreateDataAlongLineFilter::CmdFemPostCreateDataAlongLineFilter()
     sToolTipText    = QT_TR_NOOP("Define/create a clip filter which clips a field along a line");
     sWhatsThis      = "FEM_PostCreateDataAlongLineFilter";
     sStatusTip      = sToolTipText;
-    sPixmap         = "fem-DataAlongLine";
+    sPixmap         = "fem-post-data-along-line";
 }
 
 void CmdFemPostCreateDataAlongLineFilter::activated(int)
@@ -1260,7 +1260,7 @@ CmdFemPostCreateScalarClipFilter::CmdFemPostCreateScalarClipFilter()
     sToolTipText    = QT_TR_NOOP("Define/create a clip filter which clips a field with a scalar value");
     sWhatsThis      = "FEM_PostCreateScalarClipFilter";
     sStatusTip      = sToolTipText;
-    sPixmap         = "fem-clip-scalar";
+    sPixmap         = "fem-post-clip-scalar";
 }
 
 void CmdFemPostCreateScalarClipFilter::activated(int)
@@ -1286,7 +1286,7 @@ CmdFemPostWarpVectorFilter::CmdFemPostWarpVectorFilter()
     sToolTipText    = QT_TR_NOOP("Warp the geometry along a vector field by a certain factor");
     sWhatsThis      = "FEM_PostCreateWarpVectorFilter";
     sStatusTip      = sToolTipText;
-    sPixmap         = "fem-warp";
+    sPixmap         = "fem-post-warp";
 }
 
 void CmdFemPostWarpVectorFilter::activated(int)
@@ -1310,7 +1310,7 @@ CmdFemPostCutFilter::CmdFemPostCutFilter()
     sToolTipText    = QT_TR_NOOP("Cut the data along an implicit function");
     sWhatsThis      = "FEM_PostCreateCutFilter";
     sStatusTip      = sToolTipText;
-    sPixmap         = "fem-cut";
+    sPixmap         = "fem-post-cut";
 }
 
 void CmdFemPostCutFilter::activated(int)
@@ -1520,7 +1520,7 @@ CmdFemPostPipelineFromResult::CmdFemPostPipelineFromResult()
     sToolTipText    = QT_TR_NOOP("Creates a post processing pipeline from a result object");
     sWhatsThis      = "FEM_PostPipelineFromResult";
     sStatusTip      = sToolTipText;
-    sPixmap         = "fem-data";
+    sPixmap         = "fem-post-data";
 }
 
 void CmdFemPostPipelineFromResult::activated(int)
