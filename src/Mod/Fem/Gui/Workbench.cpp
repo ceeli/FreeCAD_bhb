@@ -129,6 +129,7 @@ Gui::ToolBarItem* Workbench::setupToolBars() const
               << "FEM_PostCreateWarpVectorFilter"
               << "FEM_PostCreateDataAlongLineFilter"
               << "FEM_PostCreateLinearizedStressesFilter"
+              << "FEM_PostCreateDataAtPointFilter"
               << "Separator"
               << "FEM_PostCreateFunctions";
 #endif
@@ -221,6 +222,7 @@ Gui::MenuItem* Workbench::setupMenuBar() const
              << "FEM_PostCreateWarpVectorFilter"
              << "FEM_PostCreateDataAlongLineFilter"
              << "FEM_PostCreateLinearizedStressesFilter"
+             << "FEM_PostCreateDataAtPointFilter"
              << "Separator"
              << "FEM_PostCreateFunctions";
 
