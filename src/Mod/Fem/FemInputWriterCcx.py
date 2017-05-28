@@ -342,7 +342,12 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
         f.write('** Element sets for materials and FEM element type (solid, shell, beam, fluid)\n')
         f.write('** written by {} function\n'.format(sys._getframe().f_code.co_name))
         if len(self.material_objects) == 1:
-            if self.beamsection_objects and len(self.beamsection_objects) == 1:          # single mat, single beam
+            if self.shellthickness_objects and len(self.shellthickness_objects) == 1 and self.beamsection_objects and len(self.beamsection_objects) == 1:
+                # single mat, single beams, single shells AND we need to be at the beginning to not go into single beam or singel shell ...
+                print('here we are!')
+                self.get_ccx_elsets_single_mat_single_beam()
+                self.get_ccx_elsets_single_mat_single_shell()
+            elif self.beamsection_objects and len(self.beamsection_objects) == 1:          # single mat, single beam
                 self.get_ccx_elsets_single_mat_single_beam()
             elif self.beamsection_objects and len(self.beamsection_objects) > 1:         # single mat, multiple beams
                 self.get_ccx_elsets_single_mat_multiple_beam()
@@ -389,12 +394,15 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
                                 elif (fluidsec_obj.LiquidSectionType == "PIPE OUTLET") and (counter == len(ccx_elset['ccx_elset'])):
                                     self.FluidInletoutlet_ele.append([str(elid), fluidsec_obj.LiquidSectionType, 0])  # 3rd index is to track which line number the element is defined
 
+        # write definition Eall with Eedges and Efaces
+        f.write('*ELSET,ELSET=Eall\n')
+        f.write('Eedges, Efaces\n')
         # write ccx_elsets to file
         for ccx_elset in self.ccx_elsets:
             f.write('*ELSET,ELSET=' + ccx_elset['ccx_elset_name'] + '\n')
             if ccx_elset['ccx_elset']:
-                if ccx_elset['ccx_elset'] == self.ccx_eall:
-                    f.write(self.ccx_eall + '\n')
+                if (ccx_elset['ccx_elset'] == self.ccx_eall) or (ccx_elset['ccx_elset'] == 'Eedges') or (ccx_elset['ccx_elset'] == 'Efaces'):
+                    f.write(ccx_elset['ccx_elset'] + '\n')
                 else:
                     for elid in ccx_elset['ccx_elset']:
                         f.write(str(elid) + ',\n')
@@ -1051,7 +1059,8 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
         beamsec_obj = self.beamsection_objects[0]['Object']
         ccx_elset = {}
         ccx_elset['beamsection_obj'] = beamsec_obj
-        ccx_elset['ccx_elset'] = self.ccx_eall
+        # ccx_elset['ccx_elset'] = self.ccx_eall
+        ccx_elset['ccx_elset'] = 'Eedges'
         ccx_elset['ccx_elset_name'] = get_ccx_elset_beam_name(mat_obj.Name, beamsec_obj.Name)
         ccx_elset['mat_obj_name'] = mat_obj.Name
         ccx_elset['ccx_mat_name'] = mat_obj.Material['Name']
@@ -1073,7 +1082,8 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
         shellth_obj = self.shellthickness_objects[0]['Object']
         ccx_elset = {}
         ccx_elset['shellthickness_obj'] = shellth_obj
-        ccx_elset['ccx_elset'] = self.ccx_eall
+        # ccx_elset['ccx_elset'] = self.ccx_eall
+        ccx_elset['ccx_elset'] = 'Efaces'
         ccx_elset['ccx_elset_name'] = get_ccx_elset_shell_name(mat_obj.Name, shellth_obj.Name)
         ccx_elset['mat_obj_name'] = mat_obj.Name
         ccx_elset['ccx_mat_name'] = mat_obj.Material['Name']
