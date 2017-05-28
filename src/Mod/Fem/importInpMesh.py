@@ -240,3 +240,83 @@ def read_inp(file_name):
             'Tetra10Elem': elements.tetra10, 'Penta15Elem': elements.penta15, 'Hexa20Elem': elements.hexa20,
             'Tria3Elem': elements.tria3, 'Tria6Elem': elements.tria6, 'Quad4Elem': elements.quad4,
             'Quad8Elem': elements.quad8, 'Seg2Elem': elements.seg2}  # , 'Seg3Elem': elements.seg3}
+
+
+def write_inp(femmesh, file_name):
+    f = file_name  # use file_name in def just to know imediately what f stands for ...
+    f.write('** written by the FreeCAD Python inp file writer, we gone try mixed meshes of edge and face elements :-)\n\n')
+    f.write('** Nodes\n')
+    f.write('*Node, NSET=Nall\n')
+
+    # nodes
+    meshnodes = femmesh.Nodes
+    for node in meshnodes:
+        vec = meshnodes[node]
+        f.write("{0}, {1:.12f}, {2:.12f}, {3:.12f}\n".format(node, vec.x, vec.y, vec.z, node))  # TODO do not writes all the '0'
+    f.write('\n\n')
+
+    # elements
+    f.write('** Elements\n')
+    f.write('** we can not just write all edges because there are edges in the mesh which belongs to the faces\n')
+    f.write('** we need one elementset fo the elements of each mesh dimension\n')
+
+    # faces, at the moment I test with beams and faces, thus I can just write all faces and need only to find the edges
+    # only S6 elements
+    f.write('** faces element set for the face mesh\n')
+    f.write('*Element, TYPE=S6, ELSET=Efaces\n')
+    meshfaces = femmesh.Faces
+    for mf in meshfaces:
+        n = femmesh.getElementNodes(mf)  # nodes of the mesh element face mf
+        f.write("{0}, {1}, {2}, {3}, {4}, {5}, {6}\n".format(
+            mf, n[0], n[1], n[2], n[3], n[4], n[5]))
+    f.write('\n')
+
+    # edges
+    f.write('** edges element set for the edge mesh\n')
+    f.write('*Element, TYPE=B32, ELSET=Eedges\n')
+    # get edges
+    meshedges = get_fem_mesh_edges_not_belong_to_faces_or_volumes(femmesh)
+    for me in meshedges:
+        n = femmesh.getElementNodes(me)  # nodes of the mesh element edge me
+        f.write("{0}, {1}, {2}, {3}\n".format(
+            me, n[0], n[1], n[2]))
+    f.write('\n')
+
+    '''
+    f.write('** for debugging we gone writing them all ... \n')
+    meshedges = femmesh.Edges
+    for me in meshedges:
+        n = femmesh.getElementNodes(me)  # nodes of the mesh element edge me
+        f.write("{0}, {1}, {2}, {3}\n".format(
+            me, n[0], n[1], n[2]))
+    f.write('\n')
+    '''
+
+
+# kommt ins FemMeshtools spaeter
+def get_fem_mesh_edges_not_belong_to_faces_or_volumes(femmesh):
+    '''vorerst nur faces, mhh die def mach ich fuer umsonst, die kann ulrich wohl viiiiieeeel smarter ... egal
+       - zuerst finde alle edges die zu faces gehoeren
+       -- nimm die punkte einer edge und schaue in allen faces ob eine face alle drei punkte hat
+       --- wenn ja gehoert die edge zu einer face
+       --- wenn nein ist sie eigenstaendig --> die brauchen wir
+       returens a list of EdgeIDs not belonging to a face or volume (at the moment face only)
+       [EdgeID, EdgeID, ...]
+    '''
+    meshfaces = femmesh.Faces
+    meshedges = femmesh.Edges
+    edges = []
+    for me in meshedges:
+        nme = femmesh.getElementNodes(me)
+        # print(nme)
+        edge_belongs_to_a_face = False
+        for mf in meshfaces:
+            nmf = femmesh.getElementNodes(mf)
+            # print(nmf)
+            if (nme[0] in nmf) and (nme[1] in nmf) and (nme[2] in nmf):  # B32 has 3 nodes
+                edge_belongs_to_a_face = True
+                break
+        if edge_belongs_to_a_face is False:
+            edges.append(me)
+    # print(edges)
+    return edges

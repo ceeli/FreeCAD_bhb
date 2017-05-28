@@ -74,10 +74,15 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
 
     def write_calculix_one_input_file(self):
         timestart = time.clock()
-        self.femmesh.writeABAQUS(self.file_name)
+        # self.femmesh.writeABAQUS(self.file_name)
 
         # reopen file with "append" and add the analysis definition
-        inpfile = open(self.file_name, 'a')
+        # inpfile = open(self.file_name, 'a')
+
+        # temporary use the new Python inpwriter
+        inpfile = open(self.file_name, 'w')
+        import importInpMesh
+        importInpMesh.write_inp(self.femmesh, inpfile)
         inpfile.write('\n\n')
 
         # Check to see if fluid sections are in analysis and use D network element type
