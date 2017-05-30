@@ -1261,10 +1261,10 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
         }
     }
 
-    if (!elementsMap.empty()) {
-        anABAQUS_Output.close();
-        return; // done
-    }
+    //if (!elementsMap.empty()) {
+    //    anABAQUS_Output.close();
+    //    return; // done
+    //}
 
     // add faces
     //
@@ -1296,10 +1296,10 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
         }
     }
 
-    if (!elementsMap.empty()) {
-        anABAQUS_Output.close();
-        return; // done
-    }
+    //if (!elementsMap.empty()) {
+    //    anABAQUS_Output.close();
+    //    return; // done
+    //}
 
     // add edges
     //
