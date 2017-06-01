@@ -1363,12 +1363,16 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
     anABAQUS_Output << std::endl;
     }
 
+    std::string elsetname = "";
     if (!elementsMap.empty()) {
+        /*
         anABAQUS_Output << "** Define element set Eall" << std::endl;
         anABAQUS_Output << "*ELSET, ELSET=Eall" << std::endl;
         anABAQUS_Output << "Evolumes" << std::endl;
         anABAQUS_Output.close();
         return; // done
+        */
+        elsetname += "Evolumes, ";
     }
 
     // add faces
@@ -1404,11 +1408,14 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
     }
 
     if (!elementsMap.empty()) {
+        /*
         anABAQUS_Output << "** Define element set Eall" << std::endl;
         anABAQUS_Output << "*ELSET, ELSET=Eall" << std::endl;
         anABAQUS_Output << "Efaces" << std::endl;
         anABAQUS_Output.close();
         return; // done
+        */
+        elsetname += "Efaces, ";
     }
 
     // add edges
@@ -1442,11 +1449,15 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
         }
     anABAQUS_Output << std::endl;
     }
+
+    if (!elementsMap.empty()) {
+        elsetname += "Eedges, ";
+    }
     elementsMap.clear();
 
     anABAQUS_Output << "** Define element set Eall" << std::endl;
     anABAQUS_Output << "*ELSET, ELSET=Eall" << std::endl;
-    anABAQUS_Output << "Eedges" << std::endl;
+    anABAQUS_Output << elsetname << std::endl;
     anABAQUS_Output.close();
 }
 
