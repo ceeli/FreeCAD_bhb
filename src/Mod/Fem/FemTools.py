@@ -401,7 +401,8 @@ class FemTools(QtCore.QRunnable, QtCore.QObject):
         if self.beam_sections:
             if self.shell_thicknesses:
                 # this needs to be checked only once either here or in shell_thicknesses
-                message += "Beam Sections and shell thicknesses in one analysis is not supported at the moment.\n"
+                # message += "Beam Sections and shell thicknesses in one analysis is not supported at the moment.\n"
+                pass  # allow beam sections and shell thicknesse in one analysis
             if self.fluid_sections:
                 # this needs to be checked only once either here or in shell_thicknesses
                 message += "Beam Sections and Fluid Sections in one analysis is not supported at the moment.\n"
@@ -413,7 +414,8 @@ class FemTools(QtCore.QRunnable, QtCore.QObject):
                     has_no_references = True
             if self.mesh:
                 if self.mesh.FemMesh.FaceCount > 0 or self.mesh.FemMesh.VolumeCount > 0:
-                    message += "Beam sections defined but FEM mesh has volume or shell elements.\n"
+                    # message += "Beam sections defined but FEM mesh has volume or shell elements.\n"
+                    pass  # allow beam sections even though FEM mesh has volume or shell elements
                 if self.mesh.FemMesh.EdgeCount == 0:
                     message += "Beam sections defined but FEM mesh has no edge elements.\n"
         # shell thickness
@@ -426,7 +428,8 @@ class FemTools(QtCore.QRunnable, QtCore.QObject):
                     has_no_references = True
             if self.mesh:
                 if self.mesh.FemMesh.VolumeCount > 0:
-                    message += "Shell thicknesses defined but FEM mesh has volume elements.\n"
+                    # message += "Shell thicknesses defined but FEM mesh has volume elements.\n"
+                    pass  # allow thicknesse even though FEM mesh has volumes
                 if self.mesh.FemMesh.FaceCount == 0:
                     message += "Shell thicknesses defined but FEM mesh has no shell elements.\n"
         # fluid section
