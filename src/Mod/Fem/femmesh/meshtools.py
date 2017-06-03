@@ -30,6 +30,46 @@ __url__ = "http://www.freecadweb.org"
 import FreeCAD
 
 
+def get_fem_mesh_edges_only(femmesh):
+    '''returens a list of EdgeIDs not belonging to any face element
+       [EdgeID, EdgeID, ...]
+    '''
+    meshfaces = femmesh.Faces
+    meshedges = femmesh.Edges
+    edges = []  # does it makes sence to use a set ?! bernd
+    for me in meshedges:
+        nme = femmesh.getElementNodes(me)
+        edge_belongs_to_a_face = False
+        for mf in meshfaces:
+            nmf = femmesh.getElementNodes(mf)
+            if set(nme) < set(nmf):  # check if nme is a subset of nmf, means all ids from nme are in nmf
+                edge_belongs_to_a_face = True
+                break
+        if edge_belongs_to_a_face is False:
+            edges.append(me)
+    return edges
+
+
+def get_fem_mesh_faces_only(femmesh):
+    '''returens a list of FaceIDs not belonging to any volume element
+       [FaceID, FaceID, ...]
+    '''
+    meshvolumes = femmesh.Volumes
+    meshfaces = femmesh.Faces
+    faces = []  # does it makes sence to use a set ?! bernd
+    for mf in meshfaces:
+        nmf = femmesh.getElementNodes(mf)
+        face_belongs_to_a_volume = False
+        for mv in meshvolumes:
+            nmv = femmesh.getElementNodes(mv)
+            if set(nmf) < set(nmv):  # check if nmf is a subset of nmv, means all ids from nmf are in nmv
+                face_belongs_to_a_volume = True
+                break
+        if face_belongs_to_a_volume is False:
+            faces.append(mf)
+    return faces
+
+
 def get_femnodes_by_femobj_with_references(femmesh, femobj):
     node_set = []
     if femmesh.GroupCount:
