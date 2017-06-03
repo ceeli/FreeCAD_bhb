@@ -82,6 +82,8 @@ class FemInputWriter():
         self.femelement_table = {}
         self.constraint_conflict_nodes = []
         self.femnodes_ele_table = {}
+        self.femelements_edges_only = []
+        self.femelements_faces_only = []
 
     def get_constraints_fixed_nodes(self):
         # get nodes

@@ -250,3 +250,69 @@ def read_inp(file_name):
         'Penta6Elem': elements.penta6,
         'Penta15Elem': elements.penta15
     }
+
+
+def write_inp(femmesh, file_name, edges_only=None, faces_only=None):
+    f = file_name  # use file_name in def just to know imediately what f stands for ...
+    import FemMeshTools
+    if faces_only is None:
+        faces_only = FemMeshTools.get_fem_mesh_faces_only(femmesh)
+    if edges_only is None:
+        edges_only = FemMeshTools.get_fem_mesh_edges_only(femmesh)
+    f.write('** written by the FreeCAD Python inp file writer, we gone try mixed meshes of edge and face elements :-)\n\n')
+    f.write('** Nodes\n')
+    f.write('*Node, NSET=Nall\n')
+
+    # nodes
+    meshnodes = femmesh.Nodes
+    for node in meshnodes:
+        vec = meshnodes[node]
+        # TODO better formating of node coordinates, CalculiX supprts double float precisiondoes but only 15 chars diggits
+        # TODO do not writes all the '0'
+        f.write("{0}, {1}, {2}, {3}\n".format(node, vec.x, vec.y, vec.z, node))
+    f.write('\n\n')
+
+    # elements
+    f.write('** Elements\n')
+    elementsets = ''
+
+    # volumes
+    if femmesh.Volumes:
+        # only C3D10 elements, tetra10
+        f.write('** volume element set for the volume mesh\n')
+        f.write('*Element, TYPE=C3D10, ELSET=Evolumes\n')
+        for mv in femmesh.Volumes:
+            n = femmesh.getElementNodes(mv)  # nodes of the mesh element volume mv
+            f.write("{0}, {2}, {1}, {3}, {4}, {5}, {7}, {6}, {9}, {8}, {10}\n".format(
+                mv, n[0], n[1], n[2], n[3], n[4], n[5], n[6], n[7], n[8], n[9]))
+        f.write('\n')
+        elementsets += 'Evolumes, '
+
+    # faces
+    if faces_only:
+        # only S6 elements, tria6
+        f.write('** faces element set for the face mesh\n')
+        f.write('*Element, TYPE=S6, ELSET=Efaces\n')
+        for mf in faces_only:
+            n = femmesh.getElementNodes(mf)  # nodes of the mesh element face mf
+            f.write("{0}, {1}, {2}, {3}, {4}, {5}, {6}\n".format(
+                mf, n[0], n[1], n[2], n[3], n[4], n[5]))
+        f.write('\n')
+        elementsets += 'Efaces, '
+
+    # edges
+    if edges_only:
+        # only B32, seg3
+        f.write('** edges element set for the edge mesh\n')
+        f.write('*Element, TYPE=B32, ELSET=Eedges\n')
+        # get edges
+        for me in edges_only:
+            n = femmesh.getElementNodes(me)  # nodes of the mesh element edge me
+            f.write("{0}, {1}, {3}, {2}\n".format(
+                me, n[0], n[1], n[2]))
+        f.write('\n')
+        elementsets += 'Eedges'
+
+    # define Eall
+    f.write('*ELSET, ELSET=Eall\n')
+    f.write(elementsets + '\n')

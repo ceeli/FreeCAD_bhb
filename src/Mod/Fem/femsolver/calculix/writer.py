@@ -77,11 +77,24 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
 
     def write_calculix_one_input_file(self):
         timestart = time.clock()
-        self.femmesh.writeABAQUS(self.file_name, 1, False)
-
-        # reopen file with "append" and add the analysis definition
-        inpfile = open(self.file_name, 'a')
-        inpfile.write('\n\n')
+        '''use:
+        FreeCAD.ConfigSet('inpWriter', 'Python')
+        FreeCAD.ConfigSet('inpWriter', 'Cpp')
+        FreeCAD.ConfigGet('inpWriter')
+        '''
+        if FreeCAD.ConfigGet('inpWriter') == 'Cpp':
+            print('Cpp inpWriter')
+            self.femmesh.writeABAQUS(self.file_name, 2, False)
+            inpfile = open(self.file_name, 'a')
+        else:
+            print('Python inpWriter')
+            if not self.femelements_edges_only:
+                self.femelements_edges_only = FemMeshTools.get_fem_mesh_edges_only(self.femmesh)
+            if not self.femelements_faces_only:
+                self.femelements_faces_only = FemMeshTools.get_fem_mesh_faces_only(self.femmesh)
+            inpfile = open(self.file_name, 'w')
+            import feminterface.importInpMesh as importInpMesh
+            importInpMesh.write_inp(self.femmesh, inpfile, self.femelements_edges_only, self.femelements_faces_only)
 
         # Check to see if fluid sections are in analysis and use D network element type
         if self.fluidsection_objects:
