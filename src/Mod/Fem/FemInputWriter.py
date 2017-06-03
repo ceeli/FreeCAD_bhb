@@ -82,6 +82,11 @@ class FemInputWriter():
         self.femelement_table = {}
         self.constraint_conflict_nodes = []
         self.femnodes_ele_table = {}
+        self.femelements_edges_only = []
+        self.femelements_faces_only = []
+        self.femelement_volumes_table = {}
+        self.femelement_faces_table = {}
+        self.femelement_edges_table = {}
 
     def get_constraints_fixed_nodes(self):
         # get nodes
@@ -183,23 +188,24 @@ class FemInputWriter():
     def get_element_geometry2D_elements(self):
         # get element ids and write them into the objects
         print("Shell thicknesses")
-        if not self.femelement_table:
-            self.femelement_table = FemMeshTools.get_femelement_table(self.femmesh)
-        FemMeshTools.get_femelement_sets(self.femmesh, self.femelement_table, self.shellthickness_objects)
+        if not self.femelement_faces_table:
+            self.femelement_faces_table = FemMeshTools.get_femelement_faces_table(self.femmesh)
+        FemMeshTools.get_femelement_sets(self.femmesh, self.femelement_faces_table, self.shellthickness_objects)
 
     def get_element_geometry1D_elements(self):
         # get element ids and write them into the objects
         print("Beam sections")
-        if not self.femelement_table:
-            self.femelement_table = FemMeshTools.get_femelement_table(self.femmesh)
-        FemMeshTools.get_femelement_sets(self.femmesh, self.femelement_table, self.beamsection_objects)
+        if not self.femelement_edges_table:
+            self.femelement_edges_table = FemMeshTools.get_femelement_edges_table(self.femmesh)
+        FemMeshTools.get_femelement_sets(self.femmesh, self.femelement_edges_table, self.beamsection_objects)
 
     def get_element_fluid1D_elements(self):
         # get element ids and write them into the objects
         print("Fluid sections")
-        if not self.femelement_table:
-            self.femelement_table = FemMeshTools.get_femelement_table(self.femmesh)
-        FemMeshTools.get_femelement_sets(self.femmesh, self.femelement_table, self.fluidsection_objects)
+        if not self.femelement_edges_table:
+            self.femelement_edges_table = FemMeshTools.get_femelement_edges_table(self.femmesh)
+        FemMeshTools.get_femelement_sets(self.femmesh, self.femelement_edges_table, self.fluidsection_objects)
+
 
     def get_material_elements(self):
         # it only works if either Volumes or Shellthicknesses or Beamsections are in the material objects
@@ -214,8 +220,8 @@ class FemInputWriter():
                 all_found = FemMeshTools.get_femelement_sets_from_group_data(self.femmesh, self.material_objects)
                 print(all_found)
             if all_found is False:
-                if not self.femelement_table:
-                    self.femelement_table = FemMeshTools.get_femelement_table(self.femmesh)
+                if not self.femelement_volumes_table:
+                    self.femelement_volumes_table = FemMeshTools.get_femelement_volumes_table(self.femmesh)
                 # we're going to use the binary search for get_femelements_by_femnodes()
                 # thus we need the parameter values self.femnodes_ele_table
                 if not self.femnodes_mesh:
@@ -224,12 +230,12 @@ class FemInputWriter():
                     self.femnodes_ele_table = FemMeshTools.get_femnodes_ele_table(self.femnodes_mesh, self.femelement_table)
                 FemMeshTools.get_femelement_sets(self.femmesh, self.femelement_table, self.material_objects, self.femnodes_ele_table)
         if self.shellthickness_objects:
-            if not self.femelement_table:
-                self.femelement_table = FemMeshTools.get_femelement_table(self.femmesh)
-            FemMeshTools.get_femelement_sets(self.femmesh, self.femelement_table, self.material_objects)
+            if not self.femelement_faces_table:
+                self.femelement_faces_table = FemMeshTools.get_femelement_faces_table(self.femmesh)
+            FemMeshTools.get_femelement_sets(self.femmesh, self.femelement_faces_table, self.material_objects)
         if self.beamsection_objects or self.fluidsection_objects:
-            if not self.femelement_table:
-                self.femelement_table = FemMeshTools.get_femelement_table(self.femmesh)
-            FemMeshTools.get_femelement_sets(self.femmesh, self.femelement_table, self.material_objects)
+            if not self.femelement_edges_table:
+                self.femelement_edges_table = FemMeshTools.get_femelement_edges_table(self.femmesh)
+            FemMeshTools.get_femelement_sets(self.femmesh, self.femelement_edges_table, self.material_objects)
 
 ##  @}
