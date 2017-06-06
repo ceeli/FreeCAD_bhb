@@ -343,12 +343,12 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
         # get the element ids for face and edge elements and write them into the objects
         if len(self.shellthickness_objects) > 1:
             self.get_element_geometry2D_elements()
-        elif len(self.beamsection_objects) > 1:
+        if len(self.beamsection_objects) > 1:
             self.get_element_geometry1D_elements()
             # we will need to split the beams even for one beamobj
             # because no beam in z-direction can be used in ccx without a special adjustment
             # thus they need an own ccx_elset --> but this is ccx specific and thus should not be in input writer!
-        elif len(self.fluidsection_objects) > 1:
+        if len(self.fluidsection_objects) > 1:
             self.get_element_fluid1D_elements()
 
         # get the element ids for material objects and write them into the material object
@@ -363,15 +363,15 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
                 # but a mesh could contain the element faces of the volumes as faces
                 # and the edges of the faces as edges, there we have to check for some geometric objects
                 self.get_ccx_elsets_single_mat_solid()
-            elif len(self.shellthickness_objects) == 1:
+            if len(self.shellthickness_objects) == 1:
                 self.get_ccx_elsets_single_mat_single_shell()
             elif len(self.shellthickness_objects) > 1:
                 self.get_ccx_elsets_single_mat_multiple_shell()
-            elif len(self.beamsection_objects) == 1:
+            if len(self.beamsection_objects) == 1:
                 self.get_ccx_elsets_single_mat_single_beam()
             elif len(self.beamsection_objects) > 1:
                 self.get_ccx_elsets_single_mat_multiple_beam()
-            elif len(self.fluidsection_objects) == 1:
+            if len(self.fluidsection_objects) == 1:
                 self.get_ccx_elsets_single_mat_single_fluid()
             elif len(self.fluidsection_objects) > 1:
                 self.get_ccx_elsets_single_mat_multiple_fluid()
@@ -382,15 +382,15 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
                 # but a mesh could contain the element faces of the volumes as faces
                 # and the edges of the faces as edges, there we have to check for some geometric objects
                 self.get_ccx_elsets_multiple_mat_solid()  # volume is a bit special, because retrieving ids from group mesh data is implemented
-            elif len(self.shellthickness_objects) == 1:
+            if len(self.shellthickness_objects) == 1:
                 self.get_ccx_elsets_multiple_mat_single_shell()
             elif len(self.shellthickness_objects) > 1:
                 self.get_ccx_elsets_multiple_mat_multiple_shell()
-            elif len(self.beamsection_objects) == 1:
+            if len(self.beamsection_objects) == 1:
                 self.get_ccx_elsets_multiple_mat_single_beam()
             elif len(self.beamsection_objects) > 1:
                 self.get_ccx_elsets_multiple_mat_multiple_beam()
-            elif len(self.fluidsection_objects) == 1:
+            if len(self.fluidsection_objects) == 1:
                 self.get_ccx_elsets_multiple_mat_single_fluid()
             elif len(self.fluidsection_objects) > 1:
                 self.get_ccx_elsets_multiple_mat_multiple_fluid()
