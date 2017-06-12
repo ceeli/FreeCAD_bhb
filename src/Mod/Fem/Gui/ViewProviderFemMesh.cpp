@@ -193,8 +193,8 @@ ViewProviderFemMesh::ViewProviderFemMesh()
 
     ShapeColor.setValue(App::Color(1.0f,0.7f,0.0f));
     ADD_PROPERTY(BackfaceCulling,(true));
-    ADD_PROPERTY(ShowInner, (false));
-    ADD_PROPERTY(MaxFacesShowInner,(50000));
+    // ADD_PROPERTY(ShowInner, (false));
+    // ADD_PROPERTY(MaxFacesShowInner,(50000));
 
     onlyEdges = false;
 
@@ -369,7 +369,8 @@ void ViewProviderFemMesh::updateData(const App::Property* prop)
         ViewProviderFEMMeshBuilder builder;
         resetColorByNodeId();
         resetDisplacementByNodeId();
-        builder.createMesh(prop, pcCoords, pcFaces, pcLines, vFaceElementIdx, vNodeElementIdx, onlyEdges, ShowInner.getValue(), MaxFacesShowInner.getValue());
+        // builder.createMesh(prop, pcCoords, pcFaces, pcLines, vFaceElementIdx, vNodeElementIdx, onlyEdges, ShowInner.getValue(), MaxFacesShowInner.getValue());
+        builder.createMesh(prop, pcCoords, pcFaces, pcLines, vFaceElementIdx, vNodeElementIdx, onlyEdges);
     }
     Gui::ViewProviderGeometryObject::updateData(prop);
 }
@@ -395,7 +396,8 @@ void ViewProviderFemMesh::onChanged(const App::Property* prop)
     else if (prop == &ShowInner ) {
         // recalc mesh with new settings
         ViewProviderFEMMeshBuilder builder;
-        builder.createMesh(&(dynamic_cast<Fem::FemMeshObject*>(this->pcObject)->FemMesh), pcCoords, pcFaces, pcLines, vFaceElementIdx, vNodeElementIdx, onlyEdges, ShowInner.getValue(), MaxFacesShowInner.getValue());
+        // builder.createMesh(&(dynamic_cast<Fem::FemMeshObject*>(this->pcObject)->FemMesh), pcCoords, pcFaces, pcLines, vFaceElementIdx, vNodeElementIdx, onlyEdges, ShowInner.getValue(), MaxFacesShowInner.getValue());
+        builder.createMesh(&(dynamic_cast<Fem::FemMeshObject*>(this->pcObject)->FemMesh), pcCoords, pcFaces, pcLines, vFaceElementIdx, vNodeElementIdx, onlyEdges);
     }
     else if (prop == &LineWidth) {
         pcDrawStyle->lineWidth = LineWidth.getValue();
@@ -690,7 +692,8 @@ void ViewProviderFEMMeshBuilder::buildNodes(const App::Property* prop, std::vect
         std::vector<unsigned long> vFaceElementIdx;
         std::vector<unsigned long> vNodeElementIdx;
         bool onlyEdges;
-        createMesh(prop, pcPointsCoord, pcFaces,pcLines,vFaceElementIdx,vNodeElementIdx,onlyEdges,false,0);
+        // createMesh(prop, pcPointsCoord, pcFaces,pcLines,vFaceElementIdx,vNodeElementIdx,onlyEdges,false,0);
+        createMesh(prop, pcPointsCoord, pcFaces,pcLines,vFaceElementIdx,vNodeElementIdx,onlyEdges);
     }
 }
 
@@ -716,9 +719,10 @@ void ViewProviderFEMMeshBuilder::createMesh(const App::Property* prop,
                                             SoIndexedLineSet* lines,
                                             std::vector<unsigned long> &vFaceElementIdx,
                                             std::vector<unsigned long> &vNodeElementIdx,
-                                            bool &onlyEdges,
-                                            bool ShowInner,
-                                            int MaxFacesShowInner) const
+                                            bool &onlyEdges //,
+                                            // bool ShowInner,
+                                            // int MaxFacesShowInner
+                                           ) const
 {
 
     const Fem::PropertyFemMesh* mesh = static_cast<const Fem::PropertyFemMesh*>(prop);
