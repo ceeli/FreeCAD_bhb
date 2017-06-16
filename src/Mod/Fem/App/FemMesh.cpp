@@ -82,6 +82,9 @@
 #include <boost/tokenizer.hpp>
 
 
+// temporary for debugging purpose
+#include <iostream>
+
 using namespace Fem;
 using namespace Base;
 using namespace boost;
@@ -107,15 +110,11 @@ FemMesh::~FemMesh()
 {
     //Base::Console().Log("FemMesh::~FemMesh():%p\n",this);
 
-    try {
-        TopoDS_Shape aNull;
-        myMesh->ShapeToMesh(aNull);
-        myMesh->Clear();
-        //myMesh->ClearLog();
-        delete myMesh;
-    }
-    catch (...) {
-    }
+    TopoDS_Shape aNull;
+    myMesh->ShapeToMesh(aNull);
+    myMesh->Clear();
+    //myMesh->ClearLog();
+    delete myMesh;
 }
 
 FemMesh &FemMesh::operator=(const FemMesh& mesh)
@@ -1075,12 +1074,31 @@ void FemMesh::read(const char *FileName)
     }
 }
 
+
+/*! That function writes node definitions and element definitions
+ * into the Calculix-input-file.
+ */
 void FemMesh::writeABAQUS(const std::string &Filename) const
 {
     static std::map<std::string, std::vector<int> > elemOrderMap;
     static std::map<int, std::string> edgeTypeMap;
     static std::map<int, std::string> faceTypeMap;
     static std::map<int, std::string> volTypeMap;
+    
+    // addtions to filter surface faces out of the mesh. Ulrich1a
+    // Face definitions of element types: Facenumber und vector of node numbers
+    typedef std::map<int, std::vector<int> > DefiniMap; 
+    typedef DefiniMap::iterator DefIt;
+  
+    static DefiniMap hexadef, tetdef;
+    static DefIt faceIt;
+    // number of nodes per element type, map of the face definitions for this element type
+    typedef std::map<int, DefiniMap> MapMapper;
+    typedef MapMapper::iterator MapIt;
+    static MapMapper volDef;
+    static MapIt     defIt;
+    
+
     if (elemOrderMap.empty()) {
         // node order fits with node order in importCcxFrdResults.py module to import CalculiX result meshes
 
@@ -1184,17 +1202,76 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
         volTypeMap.insert(std::make_pair(elemOrderMap["C3D6"].size(), "C3D6"));
         elemOrderMap.insert(std::make_pair("C3D15", c3d15));
         volTypeMap.insert(std::make_pair(elemOrderMap["C3D15"].size(), "C3D15"));
+        
+        /*
+        *          Y
+        *         /
+        *     0----3
+        *    /|   /|
+        * Z / |  / |
+        *  /  4-/--7
+        * 1----2  /
+        * | /  | /
+        * |/   |/ 
+        * 5----6 -x
+        * 
+        hexaFaces = {  # hexa8 or hexa20 (ignoring mid-nodes)
+          1: [0, 1, 2, 3],
+          2: [4, 7, 6, 5],
+          3: [0, 4, 5, 1],
+          4: [1, 5, 6, 2],
+          5: [2, 6, 7, 3],
+          6: [3, 7, 4, 0]}
+        */
+        std::vector<int> facedef = {0, 1, 2, 3};
+        hexadef.insert(std::make_pair(1, facedef));
+        facedef = {4, 7, 6, 5};
+        hexadef.insert(std::make_pair(2, facedef));
+        facedef = {0, 4, 5, 1};
+        hexadef.insert(std::make_pair(3, facedef));
+        facedef = {1, 5, 6, 2};
+        hexadef.insert(std::make_pair(4, facedef));
+        facedef = {2, 6, 7, 3};
+        hexadef.insert(std::make_pair(5, facedef));
+        facedef = {3, 7, 4, 0};
+        hexadef.insert(std::make_pair(6, facedef));
+        /*
+         Z
+         |   0  Y
+         |  /|\/
+         | / | \
+         |1-----2
+         | \ | /
+         | /\|/
+         |...3.....x
+         
+        tetFaces = { # (ignoring mid-nodes)
+          1: [0, 1, 2],
+          2: [0, 3, 1],
+          3: [1, 3, 2],
+          4: [2, 3, 0]}
+        */
+        facedef = {0, 1, 2};
+        tetdef.insert(std::make_pair(1, facedef));
+        facedef = {0, 3, 1};
+        tetdef.insert(std::make_pair(2, facedef));
+        facedef = {1, 3, 2};
+        tetdef.insert(std::make_pair(3, facedef));
+        facedef = {2, 3, 0};
+        tetdef.insert(std::make_pair(4, facedef));
+
+        // Filling the map
+        volDef.insert(std::make_pair(8, hexadef));
+        volDef.insert(std::make_pair(20, hexadef));
+        volDef.insert(std::make_pair(4, tetdef));
+        volDef.insert(std::make_pair(10, tetdef));
     }
 
     std::ofstream anABAQUS_Output;
     anABAQUS_Output.open(Filename.c_str());
-    anABAQUS_Output.precision(13);  // https://forum.freecadweb.org/viewtopic.php?f=18&t=22759#p176669
-    // add some text
-    anABAQUS_Output << "** written by FreeCAD inp file writer for CalculiX,Abaqus meshes" << std::endl << std::endl;
 
     // add nodes
     //
-    anABAQUS_Output << "** Nodes" << std::endl;
     anABAQUS_Output << "*Node, NSET=Nall" << std::endl;
     typedef std::map<int, Base::Vector3d> VertexMap;
     VertexMap vertexMap;
@@ -1218,11 +1295,49 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
             << it->second.y << ", "
             << it->second.z << std::endl;
     }
-    anABAQUS_Output << std::endl << std::endl;;
 
     typedef std::map<int, std::vector<int> > NodesMap;
+    typedef NodesMap::iterator Element;
     typedef std::map<std::string, NodesMap> ElementsMap;
     ElementsMap elementsMap;
+    
+    // Definitions needed for filtering the faces
+    // a list is used to store the vertex numbers of a face, because it can be sorted!  
+    typedef std::list<int> VERT_LIST;
+    typedef VERT_LIST::iterator LISTITER;
+    
+    typedef std::map<VERT_LIST, int> ELE_MAP;  // it contains the list of nodes as a key to an element
+    typedef ELE_MAP::iterator MyITER;
+  
+    typedef std::list<VERT_LIST> GenFACES;  // the generated faces do not need an additional number. 
+    typedef GenFACES::iterator GenIT;
+    
+  
+    GenFACES genFaces; // here the generated face codes from the solid(s) including inner faces
+    GenIT genIt;
+    GenIT theFace, nextFace;
+  
+    GenFACES surface; // the generated face codes from the solid(s) surface
+    GenIT surIt;
+  
+  
+    ELE_MAP solidfaces; // here the found surface faces from the solid(s)
+    MyITER pos;
+  
+    ELE_MAP facefaces;
+    MyITER fpos;
+    
+    VERT_LIST myverts;  // used to generate internal lists of node indices.
+    LISTITER lpos;
+    
+    VERT_LIST singlefaces;  // This list contains all IDs of the faces not containing to a surface of a solid
+    LISTITER spos;
+  
+    bool got_single_face;
+    int aNumber, nodeCount;
+    int solidFaceCount = 0; // index counter to the internally generated facedefs of the solid.
+    //myverts.insert(lpos, 1);
+    
 
     // add volumes
     //
@@ -1240,11 +1355,40 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
                 apair.second.push_back(aVol->GetNode(*jt)->GetID());
             elementsMap[it->second].insert(apair);
         }
+        // use the same data to get all internal faces, ulrichs addition
+        std::vector<int>  nodes;
+        nodes.clear();
+        for (int i = 0; i < numNodes; i++)
+            nodes.push_back(aVol->GetNode(i)->GetID());
+
+        
+        std::cout << apair.first  << ". Element " << std::endl;
+        defIt = volDef.find(numNodes);
+        if (defIt != volDef.end())
+        {
+          for (faceIt = defIt->second.begin(); faceIt!=defIt->second.end(); faceIt++)
+          {  //iterating the faces
+            std::cout << "Face: " << faceIt->first  << ":  ";
+            myverts.clear();
+            // iterating the node indices
+            for (std::vector<int>::iterator nodeidx = faceIt->second.begin(); 
+                    nodeidx != faceIt->second.end(); nodeidx++)
+            {
+                    aNumber = *nodeidx;
+                    myverts.push_back( nodes[aNumber]);
+                    std::cout <<  nodes[aNumber] << ", ";
+            }
+            std::cout << std::endl;
+            myverts.sort();
+            genFaces.push_back( myverts );
+            solidFaceCount++;
+          }
+          std::cout << std::endl;
+        }
     }
 
     for (ElementsMap::iterator it = elementsMap.begin(); it != elementsMap.end(); ++it) {
-        anABAQUS_Output << "** Volume elements" << std::endl;
-        anABAQUS_Output << "*Element, TYPE=" << it->first << ", ELSET=Evolumes" << std::endl;
+        anABAQUS_Output << "*Element, TYPE=" << it->first << ", ELSET=Eall" << std::endl;
         for (NodesMap::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
             anABAQUS_Output << jt->first;
             // Calculix allows max 16 enntries in one line, an hexa20 has more !
@@ -1264,23 +1408,81 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
             }
             anABAQUS_Output << std::endl;
         }
-    anABAQUS_Output << std::endl;
     }
 
-    if (!elementsMap.empty()) {
-        anABAQUS_Output << "** Define element set Eall" << std::endl;
-        anABAQUS_Output << "*ELSET, ELSET=Eall" << std::endl;
-        anABAQUS_Output << "Evolumes" << std::endl;
-        anABAQUS_Output.close();
-        return; // done
-    }
+    // now filtering out all double faces.
+    genFaces.sort();
+    for (genIt = genFaces.begin(); genIt!=genFaces.end(); )
+    {
+      theFace = genIt;
+      
+      nextFace = ++genIt;
+      std::cout << "inside filter loop" << std::endl;
+      if (*theFace != *nextFace)
+      {
+        surface.push_back( *theFace);
+        for ( VERT_LIST::iterator node = theFace->begin(); node!=theFace->end(); node++)
+          std::cout << *node << ", ";
+        std::cout << std::endl;
+      }
+      else
+      {
+        ++genIt;
+      }
+    }  
+    std::cout << std::endl;
+    std::cout << "Found surface faces: " << surface.size() << std::endl;
 
-    // add faces
-    //
+    
+    // get faceFaces with searchable nodes list as map-index
+    facefaces.clear();
     elementsMap.clear();
     SMDS_FaceIteratorPtr aFaceIter = myMesh->GetMeshDS()->facesIterator();
     while (aFaceIter->more()) {
         const SMDS_MeshFace* aFace = aFaceIter->next();
+        std::pair<int, std::vector<int> > apair;
+        //apair.first = aFace->GetID();
+
+        int numNodes = aFace->NbNodes();
+        int numFNodes = numNodes;
+        if (numFNodes == 6) numFNodes = 3;
+        if (numFNodes == 8) numFNodes = 4;
+        myverts.clear();
+        for (int i = 0; i < numFNodes; i++)
+            myverts.push_back(aFace->GetNode(i)->GetID());
+        myverts.sort();
+        facefaces.insert(pair<VERT_LIST, int>( myverts, aFace->GetID()));
+    }
+    std::cout << "Found face faces: " << facefaces.size() << std::endl;
+
+    // The comparison between the surface list of codes with the map facefaces
+  
+    surIt = surface.begin();
+    for (fpos = facefaces.begin(); fpos!=facefaces.end(); fpos++)
+    {
+        got_single_face = true;
+        cout << fpos->second  << "  fpos ";
+        if ((fpos->first) == (*surIt))
+        {
+          //cout << *surIt  << "  pos " ;
+          if (surIt!=surface.end()) surIt++;
+          got_single_face = false;
+        }
+        cout << endl;
+        for ( ; surIt!=surface.end() ? ((fpos->first) > (*surIt)): false ; surIt++)
+        {
+          cout  << "  pos nonmatch " << endl;
+        }
+        if (got_single_face) singlefaces.push_back(fpos->second);
+    }
+
+    // add faces
+    // now use only the faces not containing to a solid
+    cout << "Faces not containing to a solid: " << endl;
+    for (spos = singlefaces.begin(); spos!=singlefaces.end(); spos++)
+    {
+        cout << *spos  << "  singleface " << endl;
+        const SMDS_MeshElement* aFace = myMesh->GetMeshDS()->FindElement(*spos);
         std::pair<int, std::vector<int> > apair;
         apair.first = aFace->GetID();
 
@@ -1292,11 +1494,13 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
                 apair.second.push_back(aFace->GetNode(*jt)->GetID());
             elementsMap[it->second].insert(apair);
         }
+       
     }
+    cout << endl;
+
 
     for (ElementsMap::iterator it = elementsMap.begin(); it != elementsMap.end(); ++it) {
-        anABAQUS_Output << "** Face elements" << std::endl;
-        anABAQUS_Output << "*Element, TYPE=" << it->first << ", ELSET=Efaces" << std::endl;
+        anABAQUS_Output << "*Element, TYPE=" << it->first << ", ELSET=Eall" << std::endl;
         for (NodesMap::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
             anABAQUS_Output << jt->first;
             for (std::vector<int>::iterator kt = jt->second.begin(); kt != jt->second.end(); ++kt) {
@@ -1304,13 +1508,9 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
             }
             anABAQUS_Output << std::endl;
         }
-    anABAQUS_Output << std::endl;
     }
 
     if (!elementsMap.empty()) {
-        anABAQUS_Output << "** Define element set Eall" << std::endl;
-        anABAQUS_Output << "*ELSET, ELSET=Eall" << std::endl;
-        anABAQUS_Output << "Efaces" << std::endl;
         anABAQUS_Output.close();
         return; // done
     }
@@ -1335,8 +1535,7 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
     }
 
     for (ElementsMap::iterator it = elementsMap.begin(); it != elementsMap.end(); ++it) {
-        anABAQUS_Output << "** Edge elements" << std::endl;
-        anABAQUS_Output << "*Element, TYPE=" << it->first << ", ELSET=Eedges" << std::endl;
+        anABAQUS_Output << "*Element, TYPE=" << it->first << ", ELSET=Eall" << std::endl;
         for (NodesMap::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
             anABAQUS_Output << jt->first;
             for (std::vector<int>::iterator kt = jt->second.begin(); kt != jt->second.end(); ++kt) {
@@ -1344,13 +1543,9 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
             }
             anABAQUS_Output << std::endl;
         }
-    anABAQUS_Output << std::endl;
     }
     elementsMap.clear();
 
-    anABAQUS_Output << "** Define element set Eall" << std::endl;
-    anABAQUS_Output << "*ELSET, ELSET=Eall" << std::endl;
-    anABAQUS_Output << "Eedges" << std::endl;
     anABAQUS_Output.close();
 }
 
