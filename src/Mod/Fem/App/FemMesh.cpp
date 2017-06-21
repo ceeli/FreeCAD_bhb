@@ -1367,22 +1367,22 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
         defIt = volDef.find(numNodes);
         if (defIt != volDef.end())
         {
-          for (faceIt = defIt->second.begin(); faceIt!=defIt->second.end(); faceIt++)
-          {  //iterating the faces
-            std::cout << "Face: " << faceIt->first  << ":  ";
-            myverts.clear();
-            // iterating the node indices
-            for (std::vector<int>::iterator nodeidx = faceIt->second.begin(); 
+            for (faceIt = defIt->second.begin(); faceIt!=defIt->second.end(); faceIt++)
+            {  //iterating the faces
+                std::cout << "Face: " << faceIt->first  << ":  ";
+                myverts.clear();
+                // iterating the node indices
+                for (std::vector<int>::iterator nodeidx = faceIt->second.begin(); 
                     nodeidx != faceIt->second.end(); nodeidx++)
-            {
+                {
                     aNumber = *nodeidx;
                     myverts.push_back( nodes[aNumber]);
                     std::cout <<  nodes[aNumber] << ", ";
-            }
-            std::cout << std::endl;
-            myverts.sort();
-            genFaces.push_back( myverts );
-            solidFaceCount++;
+                }
+                std::cout << std::endl;
+                myverts.sort();
+                genFaces.push_back( myverts );
+                solidFaceCount++;
           }
           std::cout << std::endl;
         }
@@ -1425,21 +1425,21 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
     genFaces.sort();
     for (genIt = genFaces.begin(); genIt!=genFaces.end(); )
     {
-      theFace = genIt;
+        theFace = genIt;
       
-      nextFace = ++genIt;
-      std::cout << "inside filter loop" << std::endl;
-      if (*theFace != *nextFace)
-      {
-        surface.push_back( *theFace);
-        for ( VERT_LIST::iterator node = theFace->begin(); node!=theFace->end(); node++)
-          std::cout << *node << ", ";
-        std::cout << std::endl;
-      }
-      else
-      {
-        ++genIt;
-      }
+        nextFace = ++genIt;
+        std::cout << "inside filter loop" << std::endl;
+        if (*theFace != *nextFace)
+        {
+            surface.push_back( *theFace);
+            for ( VERT_LIST::iterator node = theFace->begin(); node!=theFace->end(); node++)
+                std::cout << *node << ", ";
+            std::cout << std::endl;
+        }
+        else
+        {
+            ++genIt;
+        }
     }  
     std::cout << std::endl;
     std::cout << "Found surface faces: " << surface.size() << std::endl;
