@@ -1074,10 +1074,6 @@ void FemMesh::read(const char *FileName)
     }
 }
 
-
-/*! That function writes node definitions and element definitions
- * into the Calculix-input-file.
- */
 void FemMesh::writeABAQUS(const std::string &Filename) const
 {
     static std::map<std::string, std::vector<int> > elemOrderMap;
@@ -1269,9 +1265,13 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
 
     std::ofstream anABAQUS_Output;
     anABAQUS_Output.open(Filename.c_str());
+    anABAQUS_Output.precision(13);  // https://forum.freecadweb.org/viewtopic.php?f=18&t=22759#p176669
+    // add some text
+    anABAQUS_Output << "** written by FreeCAD inp file writer for CalculiX,Abaqus meshes" << std::endl << std::endl;
 
     // add nodes
     //
+    anABAQUS_Output << "** Nodes" << std::endl;
     anABAQUS_Output << "*Node, NSET=Nall" << std::endl;
     typedef std::map<int, Base::Vector3d> VertexMap;
     VertexMap vertexMap;
@@ -1295,6 +1295,7 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
             << it->second.y << ", "
             << it->second.z << std::endl;
     }
+    anABAQUS_Output << std::endl << std::endl;;
 
     typedef std::map<int, std::vector<int> > NodesMap;
     typedef NodesMap::iterator Element;
@@ -1388,7 +1389,8 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
     }
 
     for (ElementsMap::iterator it = elementsMap.begin(); it != elementsMap.end(); ++it) {
-        anABAQUS_Output << "*Element, TYPE=" << it->first << ", ELSET=Eall" << std::endl;
+        anABAQUS_Output << "** Volume elements" << std::endl;
+        anABAQUS_Output << "*Element, TYPE=" << it->first << ", ELSET=Evolumes" << std::endl;
         for (NodesMap::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
             anABAQUS_Output << jt->first;
             // Calculix allows max 16 enntries in one line, an hexa20 has more !
@@ -1408,6 +1410,15 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
             }
             anABAQUS_Output << std::endl;
         }
+    anABAQUS_Output << std::endl;
+    }
+
+    if (!elementsMap.empty()) {
+        anABAQUS_Output << "** Define element set Eall" << std::endl;
+        anABAQUS_Output << "*ELSET, ELSET=Eall" << std::endl;
+        anABAQUS_Output << "Evolumes" << std::endl;
+        anABAQUS_Output.close();
+        return; // done
     }
 
     // now filtering out all double faces.
@@ -1494,13 +1505,11 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
                 apair.second.push_back(aFace->GetNode(*jt)->GetID());
             elementsMap[it->second].insert(apair);
         }
-       
     }
-    cout << endl;
-
 
     for (ElementsMap::iterator it = elementsMap.begin(); it != elementsMap.end(); ++it) {
-        anABAQUS_Output << "*Element, TYPE=" << it->first << ", ELSET=Eall" << std::endl;
+        anABAQUS_Output << "** Face elements" << std::endl;
+        anABAQUS_Output << "*Element, TYPE=" << it->first << ", ELSET=Efaces" << std::endl;
         for (NodesMap::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
             anABAQUS_Output << jt->first;
             for (std::vector<int>::iterator kt = jt->second.begin(); kt != jt->second.end(); ++kt) {
@@ -1508,9 +1517,13 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
             }
             anABAQUS_Output << std::endl;
         }
+    anABAQUS_Output << std::endl;
     }
 
     if (!elementsMap.empty()) {
+        anABAQUS_Output << "** Define element set Eall" << std::endl;
+        anABAQUS_Output << "*ELSET, ELSET=Eall" << std::endl;
+        anABAQUS_Output << "Efaces" << std::endl;
         anABAQUS_Output.close();
         return; // done
     }
@@ -1535,7 +1548,8 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
     }
 
     for (ElementsMap::iterator it = elementsMap.begin(); it != elementsMap.end(); ++it) {
-        anABAQUS_Output << "*Element, TYPE=" << it->first << ", ELSET=Eall" << std::endl;
+        anABAQUS_Output << "** Edge elements" << std::endl;
+        anABAQUS_Output << "*Element, TYPE=" << it->first << ", ELSET=Eedges" << std::endl;
         for (NodesMap::iterator jt = it->second.begin(); jt != it->second.end(); ++jt) {
             anABAQUS_Output << jt->first;
             for (std::vector<int>::iterator kt = jt->second.begin(); kt != jt->second.end(); ++kt) {
@@ -1543,9 +1557,13 @@ void FemMesh::writeABAQUS(const std::string &Filename) const
             }
             anABAQUS_Output << std::endl;
         }
+    anABAQUS_Output << std::endl;
     }
     elementsMap.clear();
 
+    anABAQUS_Output << "** Define element set Eall" << std::endl;
+    anABAQUS_Output << "*ELSET, ELSET=Eall" << std::endl;
+    anABAQUS_Output << "Eedges" << std::endl;
     anABAQUS_Output.close();
 }
 
