@@ -1047,6 +1047,8 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
             f.write('*NODE PRINT , NSET=' + self.ccx_nall + '\n')
             f.write('U \n')
             f.write('*EL PRINT , ELSET=' + self.ccx_eall + '\n')
+            # needs unit test fixing, does not make so much sense if not used anywhere
+            # better would be a pref
             f.write('EVOL,S \n')
 
     def write_step_end(self, f):
