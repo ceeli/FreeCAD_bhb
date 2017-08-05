@@ -381,6 +381,7 @@ def insert(filename,docname,skip=[],only=[],root=None):
     openings = ifcfile.by_type("IfcOpeningElement")
     annotations = ifcfile.by_type("IfcAnnotation")
     materials = ifcfile.by_type("IfcMaterial")
+    overallboundbox = FreeCAD.BoundBox()
 
     if DEBUG: print("Building relationships table...",end="")
 
@@ -473,6 +474,10 @@ def insert(filename,docname,skip=[],only=[],root=None):
     progressbar.start("Importing IFC objects...",len(products))
     if DEBUG: print("Processing objects...")
 
+    if FreeCAD.GuiUp:
+        import FreeCADGui
+        FreeCADGui.ActiveDocument.activeView().viewAxonometric()
+
     # products
     for product in products:
         
@@ -562,6 +567,14 @@ def insert(filename,docname,skip=[],only=[],root=None):
             shape.importBrepFromString(brep)
 
             shape.scale(1000.0) # IfcOpenShell always outputs in meters
+
+            if FreeCAD.GuiUp:
+                try:
+                    if not overallboundbox.isInside(shape.BoundBox):
+                        FreeCADGui.SendMsgToActiveView("ViewFit")
+                    overallboundbox.add(shape.BoundBox)
+                except:
+                    pass
 
             if not shape.isNull():
                 if (MERGE_MODE_ARCH > 0 and archobj) or structobj:
