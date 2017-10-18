@@ -35,6 +35,7 @@ import time
 import FemMeshTools
 import FemInputWriter
 import six
+import math
 
 
 class FemInputWriterCcx(FemInputWriter.FemInputWriter):
@@ -343,7 +344,8 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
         # get the element ids for face and edge elements and write them into the objects
         if len(self.shellthickness_objects) > 1:
             self.get_element_geometry2D_elements()
-        elif len(self.beamsection_objects) > 1:
+	#changed added =
+        elif len(self.beamsection_objects) >= 1:
             self.get_element_geometry1D_elements()
             # we will need to split the beams even for one beamobj 
             # because no beam in z-direction can be used in ccx without a special adjustment
@@ -368,7 +370,7 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
             elif len(self.shellthickness_objects) > 1:
                 self.get_ccx_elsets_single_mat_multiple_shell()
             elif len(self.beamsection_objects) == 1:
-                self.get_ccx_elsets_single_mat_single_beam()
+                self.get_ccx_elsets_single_mat_single_beam_edit()
             elif len(self.beamsection_objects) > 1:
                 self.get_ccx_elsets_single_mat_multiple_beam()
             elif len(self.fluidsection_objects) == 1:
@@ -627,35 +629,49 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
             inittemp_obj = itobj['Object']
             f.write('{0},{1}\n'.format(self.ccx_nall, inittemp_obj.initialTemperature))  # OvG: Initial temperature
 
+#----------------------------------------------------------------------------------------------------------------------------
     def write_femelementsets(self, f):
         f.write('\n***********************************************************\n')
         f.write('** Sections\n')
         f.write('** written by {} function\n'.format(sys._getframe().f_code.co_name))
+	test = 0
         for ccx_elset in self.ccx_elsets:
             if ccx_elset['ccx_elset']:
                 if 'beamsection_obj'in ccx_elset:  # beam mesh
                     beamsec_obj = ccx_elset['beamsection_obj']
                     elsetdef = 'ELSET=' + ccx_elset['ccx_elset_name'] + ', '
+		    print(ccx_elset)
                     material = 'MATERIAL=' + ccx_elset['mat_obj_name']
+		    if not self.femnodes_mesh:
+                    	self.femnodes_mesh = self.femmesh.Nodes
+	            self.femelement_table = FemMeshTools.get_femelement_table(self.femmesh)
+		    element_nodes = self.femmesh.Nodes
+	            Pstart = element_nodes[self.femelement_table.items()[test][1][0]]
+	            Pend = element_nodes[self.femelement_table.items()[test][1][1]]
+		    normal = get_beam_normal(Pstart,Pend,45)
                     if beamsec_obj.SectionType == 'Rectangular':
                         height = beamsec_obj.RectHeight.getValueAs('mm')
                         width = beamsec_obj.RectWidth.getValueAs('mm')
                         section_type = ', SECTION=RECT'
                         setion_geo = str(height) + ', ' + str(width) + '\n'
                         setion_def = '*BEAM SECTION, ' + elsetdef + material + section_type + '\n'
+                        setion_nor = str(normal[0]) + ', ' + str(normal[1]) + ', ' + str(normal[2]) + '\n'
                     elif beamsec_obj.SectionType == 'Circular':
                         radius = 0.5 * beamsec_obj.CircDiameter.getValueAs('mm')
                         section_type = ', SECTION=CIRC'
                         setion_geo = str(radius) + '\n'
                         setion_def = '*BEAM SECTION, ' + elsetdef + material + section_type + '\n'
+			setion_nor = str(normal[0]) + ', ' + str(normal[1]) + ', ' + str(normal[2]) + '\n'
                     elif beamsec_obj.SectionType == 'Pipe':
                         radius = 0.5 * beamsec_obj.PipeDiameter.getValueAs('mm')
                         thickness = beamsec_obj.PipeThickness.getValueAs('mm')
                         section_type = ', SECTION=PIPE'
                         setion_geo = str(radius) + ', ' + str(thickness) + '\n'
                         setion_def = '*BEAM GENERAL SECTION, ' + elsetdef + material + section_type + '\n'
+			setion_nor = str(normal[0]) + ', ' + str(normal[1]) + ', ' + str(normal[2]) + '\n'
                     f.write(setion_def)
                     f.write(setion_geo)
+		    f.write(setion_nor)
                 elif 'fluidsection_obj'in ccx_elset:  # fluid mesh
                     fluidsec_obj = ccx_elset['fluidsection_obj']
                     elsetdef = 'ELSET=' + ccx_elset['ccx_elset_name'] + ', '
@@ -685,6 +701,8 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
                     material = 'MATERIAL=' + ccx_elset['mat_obj_name']
                     setion_def = '*SOLID SECTION, ' + elsetdef + material + '\n'
                     f.write(setion_def)
+		test = test + 1
+#----------------------------------------------------------------------------------------------------------------------------
 
     def write_step_begin(self, f):
         f.write('\n***********************************************************\n')
@@ -1092,6 +1110,23 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
         ccx_elset['ccx_mat_name'] = mat_obj.Material['Name']
         self.ccx_elsets.append(ccx_elset)
 
+#------------------------------------------------------------------------------------------------------------
+    def get_ccx_elsets_single_mat_single_beam_edit(self):
+	beam_elm_count= len(self.beamsection_objects[0]['FEMElements'])
+	for i in range (0, beam_elm_count):
+        	mat_obj = self.material_objects[0]['Object']
+        	beamsec_obj = self.beamsection_objects[0]['Object']
+        	ccx_elset = {}
+        	ccx_elset['beamsection_obj'] = beamsec_obj
+        	ccx_elset['ccx_elset'] = [self.beamsection_objects[0]['FEMElements'][i]]
+        	#ccx_elset['ccx_elset_name'] = get_ccx_elset_beam_name(mat_obj.Name, beamsec_obj.Name)
+         	ccx_elset['ccx_elset_name'] = "Mat0" + "Beam" + str(i) 
+		print(type(ccx_elset['ccx_elset_name']))
+        	ccx_elset['mat_obj_name'] = mat_obj.Name
+        	ccx_elset['ccx_mat_name'] = mat_obj.Material['Name']
+        	self.ccx_elsets.append(ccx_elset)
+#------------------------------------------------------------------------------------------------------------
+
     def get_ccx_elsets_single_mat_single_fluid(self):
         mat_obj = self.material_objects[0]['Object']
         fluidsec_obj = self.fluidsection_objects[0]['Object']
@@ -1123,6 +1158,7 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
         ccx_elset['ccx_mat_name'] = mat_obj.Material['Name']
         self.ccx_elsets.append(ccx_elset)
 
+#------------------------------------------------------------------------------------------------------------
     def get_ccx_elsets_single_mat_multiple_beam(self):
         mat_obj = self.material_objects[0]['Object']
         for beamsec_data in self.beamsection_objects:
@@ -1134,6 +1170,7 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
             ccx_elset['mat_obj_name'] = mat_obj.Name
             ccx_elset['ccx_mat_name'] = mat_obj.Material['Name']
             self.ccx_elsets.append(ccx_elset)
+#------------------------------------------------------------------------------------------------------------
 
     def get_ccx_elsets_single_mat_multiple_fluid(self):
         mat_obj = self.material_objects[0]['Object']
@@ -1301,7 +1338,64 @@ def get_ccx_elset_solid_name(mat_name, solid_name=None, mat_short_name=None):
     else:
         return mat_name + solid_name
 
+#--------------------------------------------------------------------------------
+def get_beam_normal(P1,P2, defined_angle):
+    P1x = P1[0]
+    P1y = P1[1]
+    P1z = P1[2]
+    P2x = P2[0]
+    P2y = P2[1]
+    P2z = P2[2]
 
+    vector_a = [P2x-P1x,P2y-P1y,P2z-P1z]
+    angle_rad = (math.pi/180)*defined_angle
+ 
+    nx = abs(math.cos(angle_rad))
+    ny = abs(math.sin(angle_rad))
+    if nx < 0.0000001:
+    	nx = 0;
+    if ny < 0.0000001:
+    	ny = 0;
+
+    vector_n = [nx, ny]
+
+    if vector_a[0]!=0:
+    	temp_valx = -(vector_a[1]+vector_a[2])/vector_a[0];
+    else:
+    	temp_valx = 0
+    if vector_a[1]!=0:
+    	temp_valy = -(vector_a[0]+vector_a[2])/vector_a[1];
+    else:
+    	temp_valy = 0
+    if vector_a[2]!=0:
+    	temp_valz = -(vector_a[0]+vector_a[1])/vector_a[2];
+    else:
+    	temp_valz = 0
+
+    if vector_a[0]!=0 and vector_a[1]==0 and vector_a[2]==0: 
+    	normal_n = [temp_valx,nx,ny];
+    	Dot_product_check_x = vector_a[0]*normal_n[0]+vector_a[1]*normal_n[1]+vector_a[2]*normal_n[2];
+    elif vector_a[0]==0 and vector_a[1]!=0 and vector_a[2]==0: 
+    	normal_n = [nx,temp_valy,ny];
+    	Dot_product_check_y = vector_a[0]*normal_n[0]+vector_a[1]*normal_n[1]+vector_a[2]*normal_n[2];
+    elif vector_a[0]==0 and vector_a[1]==0 and vector_a[2]!=0: 
+    	normal_n = [nx,ny,temp_valz];
+    	Dot_product_check_z = vector_a[0]*normal_n[0]+vector_a[1]*normal_n[1]+vector_a[2]*normal_n[2];
+    elif vector_a[0]==0 and vector_a[1]!=0 and vector_a[2]!=0: 
+    	normal_n = [nx,temp_valy,ny];
+    	Dot_product_check_y = vector_a[0]*normal_n[0]+vector_a[1]*normal_n[1]+vector_a[2]*normal_n[2];
+    elif vector_a[0]!=0 and vector_a[1]==0 and vector_a[2]!=0: 
+    	normal_n = [nx,ny,temp_valz];
+    	Dot_product_check_z = vector_a[0]*normal_n[0]+vector_a[1]*normal_n[1]+vector_a[2]*normal_n[2];  
+    else:
+    	normal_n = [temp_valx,nx,ny];
+    	Dot_product_check_nt = vector_a[0]*normal_n[0]+vector_a[1]*normal_n[1]+vector_a[2]*normal_n[2];
+
+    Dot_product_check = vector_a[0]*normal_n[0]+vector_a[1]*normal_n[1]+vector_a[2]*normal_n[2]
+    print(Dot_product_check)
+    return normal_n
+#--------------------------------------------------------------------------------
+    
 def is_fluid_section_inlet_outlet(ccx_elsets):
     ''' Fluid section: Inlet and Outlet requires special element definition
     '''
