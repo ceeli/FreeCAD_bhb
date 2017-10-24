@@ -78,6 +78,10 @@ class FemInputWriter():
         self.ccx_efaces = 'Efaces'
         self.ccx_eedges = 'Eedges'
         self.ccx_elsets = []
+        if hasattr(self.mesh_object, "Shape"):
+            self.theshape = self.mesh_object.Shape
+        elif hasattr(self.mesh_object, "Part"):
+            self.theshape = self.mesh_object.Part
         self.femmesh = self.mesh_object.FemMesh
         self.femnodes_mesh = {}
         self.femelement_table = {}
@@ -194,6 +198,17 @@ class FemInputWriter():
         if not self.femelement_table:
             self.femelement_table = FemMeshTools.get_femelement_table(self.femmesh)
         FemMeshTools.get_femelement_sets(self.femmesh, self.femelement_table, self.beamsection_objects)
+
+    def get_element_rotation1D_elements(self):
+        # get for each geometry edge direction the element ids and write all into the objects
+        if not self.femelement_table:
+            self.femelement_table = FemMeshTools.get_femelement_table(self.femmesh)
+        FemMeshTools.get_femelement_direction1D_set(self.femmesh, self.femelement_table, self.beamrotation_objects, self.theshape)
+        # TODO we need an aditional parameter, if no reference shapes are defined it mean all edges
+        # if no reference shape is given we use all edges of the shape that was meshed, thus we pass theshape, ATM we gone pass it in any call
+        # but ATM we do not support reference shapes for rotation object
+        # if there is a rotation object with not reference shape than there should be only this one rotation object --> prechecks
+        # if not rotation object is defined, it means all edges uses standard rotation of 0 degree
 
     def get_element_fluid1D_elements(self):
         # get element ids and write them into the objects

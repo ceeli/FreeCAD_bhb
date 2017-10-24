@@ -362,6 +362,67 @@ def get_femelement_sets(femmesh, femelement_table, fem_objects, femnodes_ele_tab
         FreeCAD.Console.PrintError('Error in get_femelement_sets -- > femelements_count_ok() failed!\n')
 
 
+def get_femelement_direction1D_set(femmesh, femelement_table, beamrotation_objects, theshape=None):
+    '''
+    get for each geometry edge direction, the normal and the element ids and write all into the beamrotation_objects
+    means no return value, we gone write into the beamrotation_objects dictionary
+    beamrot_obj['FEMRotations1D'] = [ {'ids' : [theids],
+                                       'direction' : direction,
+                                       'normal' : normal},
+                                      ...
+                                    ]
+    '''
+    if len(beamrotation_objects) == 0:
+        # no beamrotation document object, all beams use standard rotation of 0 degree (angle), we need theshape (the shpae which was meshed)
+        # since ccx needs to split them in sets anyway we need to dake care of this too
+        rotations_ids = get_femelement_directions_theshape(femmesh, femelement_table, theshape)
+        # add normals for each direction
+        rotation_angle = 0
+        for rot in rotations_ids:
+            rot['normal'] = get_beam_normal(rot['direction'], rotation_angle)
+        beamrotation_objects.append({'FEMRotations1D': rotations_ids})  # key 'Object' will be empty
+    elif len(beamrotation_objects) == 1:
+        # one beamrotaion document object with no references, all beams use rotation from this object, we need theshape (the shpae which was meshed)
+        # since ccx needs to split them in sets anyway we need to dake care of this too
+        rotations_ids = get_femelement_directions_theshape(femmesh, femelement_table, theshape)
+        # add normals for each direction
+        rotation_angle = beamrotation_objects[0]['Object'].Rotation
+        for rot in rotations_ids:
+            rot['normal'] = get_beam_normal(rot['direction'], rotation_angle)
+        beamrotation_objects[0]['FEMRotations1D'] = rotations_ids
+    elif len(beamrotation_objects) > 1:
+        # multiple beam rotation document objects, rotations defined by reference shapes, TODO implement this
+        FreeCAD.Console.PrintError('Multiple Rotations not yet supported!\n')
+    for rot_object in beamrotation_objects:  # debug print
+        print(rot_object['FEMRotations1D'])
+
+    # one beamrot doc object and ref shapes, but not all
+    # more than one beamrot doc object and ref shapes, but not all
+    # the shapes not in rot object should use the standard rotation of 0 degree
+    # precheck empty reference is only allowed if there is only one rot object, or like material one with empty uses the remaining edges
+    # last one in TODO
+    # multiple rotations, in creat elset in writerbase around line 370 needs totally updated
+    # later make some prechecks and do not make multiple rotations
+
+
+def get_femelement_directions_theshape(femmesh, femelement_table, theshape):
+    # see get_femelement_direction1D_set
+    rotations_ids = []
+    # add directions and all ids for each direction
+    for e in theshape.Shape.Edges:
+        the_edge = {}
+        the_edge['direction'] = e.Vertexes[1].Point - e.Vertexes[0].Point
+        edge_femnodes = femmesh.getNodesByEdge(e)  # femnodes for the current edge
+        the_edge['ids'] = get_femelements_by_femnodes_std(femelement_table, edge_femnodes)  # femelements for this edge
+        for rot in rotations_ids:
+            if rot['direction'] == the_edge['direction']:  # tolerance will be managed by FreeCAD see https://forum.freecadweb.org/viewtopic.php?f=22&t=14179
+                rot['ids'] += the_edge['ids']
+                break
+        else:
+            rotations_ids.append(the_edge)
+    return rotations_ids
+
+
 def get_beam_normal(beam_direction, defined_angle):
     import math
     vector_a = beam_direction

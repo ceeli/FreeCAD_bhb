@@ -340,11 +340,16 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
         # get the element ids for face and edge elements and write them into the objects
         if len(self.shellthickness_objects) > 1:
             self.get_element_geometry2D_elements()
-        elif len(self.beamsection_objects) > 1:
+        elif len(self.beamsection_objects) > 0:
+            # we need the element ids for every FEM element for the z-axis workaround
+            # even if there is only one beam section object
             self.get_element_geometry1D_elements()
             # we will need to split the beams even for one beamobj
             # because no beam in z-direction can be used in ccx without a special adjustment
             # thus they need an own ccx_elset --> but this is ccx specific and thus should not be in input writer!
+            # but for one beam section obj we could use the standard rotation for each FEM element
+            self.get_element_rotation1D_elements()  # does nothing ATM
+
         elif len(self.fluidsection_objects) > 1:
             self.get_element_fluid1D_elements()
 
@@ -634,25 +639,30 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
                     beamsec_obj = ccx_elset['beamsection_obj']
                     elsetdef = 'ELSET=' + ccx_elset['ccx_elset_name'] + ', '
                     material = 'MATERIAL=' + ccx_elset['mat_obj_name']
+                    normal = ccx_elset['beam_normal']
                     if beamsec_obj.SectionType == 'Rectangular':
                         height = beamsec_obj.RectHeight.getValueAs('mm')
                         width = beamsec_obj.RectWidth.getValueAs('mm')
                         section_type = ', SECTION=RECT'
                         setion_geo = str(height) + ', ' + str(width) + '\n'
                         setion_def = '*BEAM SECTION, ' + elsetdef + material + section_type + '\n'
+                        setion_nor = str(normal[0]) + ', ' + str(normal[1]) + ', ' + str(normal[2]) + '\n'
                     elif beamsec_obj.SectionType == 'Circular':
                         radius = 0.5 * beamsec_obj.CircDiameter.getValueAs('mm')
                         section_type = ', SECTION=CIRC'
                         setion_geo = str(radius) + '\n'
                         setion_def = '*BEAM SECTION, ' + elsetdef + material + section_type + '\n'
+                        setion_nor = str(normal[0]) + ', ' + str(normal[1]) + ', ' + str(normal[2]) + '\n'
                     elif beamsec_obj.SectionType == 'Pipe':
                         radius = 0.5 * beamsec_obj.PipeDiameter.getValueAs('mm')
                         thickness = beamsec_obj.PipeThickness.getValueAs('mm')
                         section_type = ', SECTION=PIPE'
                         setion_geo = str(radius) + ', ' + str(thickness) + '\n'
                         setion_def = '*BEAM GENERAL SECTION, ' + elsetdef + material + section_type + '\n'
+                        setion_nor = str(normal[0]) + ', ' + str(normal[1]) + ', ' + str(normal[2]) + '\n'
                     f.write(setion_def)
                     f.write(setion_geo)
+                    f.write(setion_nor)
                 elif 'fluidsection_obj'in ccx_elset:  # fluid mesh
                     fluidsec_obj = ccx_elset['fluidsection_obj']
                     elsetdef = 'ELSET=' + ccx_elset['ccx_elset_name'] + ', '
@@ -1079,15 +1089,31 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
     #                     },
     #                     {}, ... , {} ]
     def get_ccx_elsets_single_mat_single_beam(self):
+        '''
+        single beam, single mat, single rot
+        because we need a ccx_elset for any edge direction we have multiple elsets here
+        the elsets are splited in the regard of beam rotations and beam directions
+        one elset for each beamrotation for each beamdirection of all modell
+        ATM only one beamrotation is supported
+
+        TODO translate
+        sonst aus mischung beamsec und mat je schnittmenge ein ccx_elset
+        hier aus einem rotation object je direction ein ccx_elset --> elset name mit nummer
+        wir brauchen das rotation object nicht im elset, da wir hier und auch spaeter keine daten aus dem objekt mehr brauchen, ist alles in FEMRotations1D
+        '''
         mat_obj = self.material_objects[0]['Object']
         beamsec_obj = self.beamsection_objects[0]['Object']
-        ccx_elset = {}
-        ccx_elset['beamsection_obj'] = beamsec_obj
-        ccx_elset['ccx_elset'] = self.ccx_eedges
-        ccx_elset['ccx_elset_name'] = get_ccx_elset_beam_name(mat_obj.Name, beamsec_obj.Name)
-        ccx_elset['mat_obj_name'] = mat_obj.Name
-        ccx_elset['ccx_mat_name'] = mat_obj.Material['Name']
-        self.ccx_elsets.append(ccx_elset)
+        beamdirections = self.beamrotation_objects[0]['FEMRotations1D']  # in FEMRotations1D is a list with of dictionaries for every beamdirection of all edges
+        for i, beamdirection in enumerate(beamdirections):
+            ccx_elset = {}
+            ccx_elset['beamsection_obj'] = beamsec_obj
+            ccx_elset['ccx_elset'] = beamdirection['ids']  # ID's for this direction
+            ccx_elset['ccx_elset_name'] = get_ccx_elset_beam_name(mat_obj.Name, beamsec_obj.Name) + 'Rot' + str(i)  # max for beams is 20 TODO make another check here !
+            ccx_elset['mat_obj_name'] = mat_obj.Name
+            ccx_elset['ccx_mat_name'] = mat_obj.Material['Name']
+            ccx_elset['beam_normal'] = beamdirection['normal']  # normal for this direction
+            # print(ccx_elset)
+            self.ccx_elsets.append(ccx_elset)
 
     def get_ccx_elsets_single_mat_single_fluid(self):
         mat_obj = self.material_objects[0]['Object']
@@ -1131,6 +1157,7 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
             ccx_elset['mat_obj_name'] = mat_obj.Name
             ccx_elset['ccx_mat_name'] = mat_obj.Material['Name']
             self.ccx_elsets.append(ccx_elset)
+        # TODO split elset in the regard of beam rotations and beam directions
 
     def get_ccx_elsets_single_mat_multiple_fluid(self):
         mat_obj = self.material_objects[0]['Object']
@@ -1167,6 +1194,7 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
             ccx_elset['mat_obj_name'] = mat_obj.Name
             ccx_elset['ccx_mat_name'] = mat_obj.Material['Name']
             self.ccx_elsets.append(ccx_elset)
+        # TODO split elset in the regard of beam rotations and beam directions
 
     def get_ccx_elsets_multiple_mat_single_fluid(self):
         fluidsec_obj = self.fluidsection_objects[0]['Object']
@@ -1218,6 +1246,7 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
                 ccx_elset['mat_obj_name'] = mat_obj.Name
                 ccx_elset['ccx_mat_name'] = mat_obj.Material['Name']
                 self.ccx_elsets.append(ccx_elset)
+        # TODO split elset in the regard of beam rotations and beam directions
 
     def get_ccx_elsets_multiple_mat_multiple_fluid(self):
         for fluidsec_data in self.fluidsection_objects:
