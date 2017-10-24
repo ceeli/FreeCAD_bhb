@@ -357,6 +357,12 @@ def get_femelement_sets(femmesh, femelement_table, fem_objects, femnodes_ele_tab
         FreeCAD.Console.PrintError('Error in get_femelement_sets -- > femelements_count_ok() failed!\n')
 
 
+def get_femelement_direction1D_set(emmesh, femelement_table, beamrotation_objects, theshape=None)
+    # get for each geometry edge direction the element ids and write all into the beamrotation_objects
+    # means no return value, we gone write into the beamrotation_objects
+    # if no reference shape is given, all edges from thepart are used. Means in this case the Shape which was meshed has to be passed.
+
+
 def get_femnode_set_from_group_data(femmesh, fem_object):
     # get femnodes from femmesh groupdata for reference shapes of each obj.References
     # we assume the mesh group data fits with the reference shapes, no check is done in this regard !!!
