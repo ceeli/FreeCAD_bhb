@@ -92,6 +92,7 @@ class FemTools(QtCore.QRunnable, QtCore.QObject):
         # [{'Object':heatflux_constraints, 'xxxxxxxx':value}, {}, ...]
         # [{'Object':initialtemperature_constraints, 'xxxxxxxx':value}, {}, ...]
         # [{'Object':beam_sections, 'xxxxxxxx':value}, {}, ...]
+        # [{'Object':beam_rotations, 'xxxxxxxx':value}, {}, ...]
         # [{'Object':fluid_sections, 'xxxxxxxx':value}, {}, ...]
         # [{'Object':shell_thicknesses, 'xxxxxxxx':value}, {}, ...]
         # [{'Object':contact_constraints, 'xxxxxxxx':value}, {}, ...]
@@ -127,6 +128,10 @@ class FemTools(QtCore.QRunnable, QtCore.QObject):
         # set of beam sections from the analysis. Updated with update_objects
         # Individual beam sections are Proxy.Type "FemElementGeometry1D"
         self.beam_sections = []
+        ## @var beam_rotations
+        # set of beam rotations from the analysis. Updated with update_objects
+        # Individual beam rotations are Proxy.Type "FemElementRotation1D"
+        self.beam_rotations = []
         ## @var fluid_sections
         # set of fluid sections from the analysis. Updated with update_objects
         # Individual fluid sections are Proxy.Type "FemElementFluid1D"
@@ -242,6 +247,10 @@ class FemTools(QtCore.QRunnable, QtCore.QObject):
                 beam_section_dict = {}
                 beam_section_dict['Object'] = m
                 self.beam_sections.append(beam_section_dict)
+            elif hasattr(m, "Proxy") and m.Proxy.Type == "FemElementRotation1D":
+                beam_rotation_dict = {}
+                beam_rotation_dict['Object'] = m
+                self.beam_rotations.append(beam_rotation_dict)
             elif hasattr(m, "Proxy") and m.Proxy.Type == "FemElementFluid1D":
                 fluid_section_dict = {}
                 fluid_section_dict['Object'] = m
