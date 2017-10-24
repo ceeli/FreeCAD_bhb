@@ -50,6 +50,7 @@ class FemWorkbench (Workbench):
         import PyGui._CommandFemElementFluid1D
         import PyGui._CommandFemElementGeometry1D
         import PyGui._CommandFemElementGeometry2D
+        import PyGui._CommandFemElementRotation1D
         import PyGui._CommandFemMaterialSolid
         import PyGui._CommandFemMaterialFluid
         import PyGui._CommandFemMaterialMechanicalNonlinear

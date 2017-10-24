@@ -105,6 +105,7 @@ SET(FemObjectsScripts_SRCS
     PyObjects/_FemElementFluid1D.py
     PyObjects/_FemElementGeometry1D.py
     PyObjects/_FemElementGeometry2D.py
+    PyObjects/_FemElementRotation1D.py
     PyObjects/_FemMaterialMechanicalNonlinear.py
     PyObjects/_FemMeshBoundaryLayer.py
     PyObjects/_FemMeshGmsh.py
@@ -126,6 +127,7 @@ SET(FemGuiScripts_SRCS
     PyGui/_CommandFemElementFluid1D.py
     PyGui/_CommandFemElementGeometry1D.py
     PyGui/_CommandFemElementGeometry2D.py
+    PyGui/_CommandFemElementRotation1D.py
     PyGui/_CommandFemMaterialMechanicalNonlinear.py
     PyGui/_CommandFemMaterialSolid.py
     PyGui/_CommandFemMaterialFluid.py
@@ -146,6 +148,7 @@ SET(FemGuiScripts_SRCS
     PyGui/_TaskPanelFemElementFluid1D.py
     PyGui/_TaskPanelFemElementGeometry1D.py
     PyGui/_TaskPanelFemElementGeometry2D.py
+    PyGui/_TaskPanelFemElementRotation1D.py
     PyGui/_TaskPanelFemMaterial.py
     PyGui/_TaskPanelFemMeshBoundaryLayer.py
     PyGui/_TaskPanelFemMeshGmsh.py
@@ -157,6 +160,7 @@ SET(FemGuiScripts_SRCS
     PyGui/_ViewProviderFemElementFluid1D.py
     PyGui/_ViewProviderFemElementGeometry1D.py
     PyGui/_ViewProviderFemElementGeometry2D.py
+    PyGui/_ViewProviderFemElementRotation1D.py
     PyGui/_ViewProviderFemMaterial.py
     PyGui/_ViewProviderFemMaterialMechanicalNonlinear.py
     PyGui/_ViewProviderFemMeshBoundaryLayer.py
@@ -170,6 +174,7 @@ SET(FemGuiScripts_SRCS
     PyGui/TaskPanelFemElementFluid1D.ui
     PyGui/TaskPanelFemElementGeometry1D.ui
     PyGui/TaskPanelFemElementGeometry2D.ui
+    PyGui/TaskPanelFemElementRotation1D.ui
     PyGui/TaskPanelFemMaterial.ui
     PyGui/TaskPanelFemMeshBoundaryLayer.ui
     PyGui/TaskPanelFemMeshGmsh.ui
