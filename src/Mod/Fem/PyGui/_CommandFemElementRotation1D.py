@@ -37,7 +37,7 @@ class _CommandFemElementRotation1D(FemCommands):
     "The Fem_ElementRotation1D command definition"
     def __init__(self):
         super(_CommandFemElementRotation1D, self).__init__()
-        self.resources = {'Pixmap': 'fem-beam-section',
+        self.resources = {'Pixmap': 'fem-beam-rotation',
                           'MenuText': QtCore.QT_TRANSLATE_NOOP("FEM_ElementRotation1D", "Beam rotation"),
                           'Accel': "C, B",
                           'ToolTip': QtCore.QT_TRANSLATE_NOOP("FEM_ElementRotation1D", "Creates a FEM beam rotation")}
