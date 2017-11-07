@@ -67,6 +67,17 @@ def makeConstraintDisplacement(doc, name="ConstraintDisplacement"):
     return obj
 
 
+def makeConstraintElectrostaticPotential(doc, name="ConstraintElectrostaticPotential"):
+    '''makeConstraintTransform(document, [name]): makes a Fem ConstraintTransform object'''
+    obj = doc.addObject("Fem::ConstraintPython", name)
+    import PyObjects._FemConstraintElectrostaticPotential
+    PyObjects._FemConstraintElectrostaticPotential.Proxy(obj)
+    if FreeCAD.GuiUp:
+        import PyGui._ViewProviderFemConstraintElectrostaticPotential
+        PyGui._ViewProviderFemConstraintElectrostaticPotential.ViewProxy(obj.ViewObject)
+    return obj
+
+
 def makeConstraintFixed(doc, name="ConstraintFixed"):
     '''makeConstraintFixed(document, [name]): makes a Fem ConstraintFixed object'''
     obj = doc.addObject("Fem::ConstraintFixed", name)
@@ -163,17 +174,6 @@ def makeConstraintTemperature(doc, name="ConstraintTemperature"):
 def makeConstraintTransform(doc, name="ConstraintTransform"):
     '''makeConstraintTransform(document, [name]): makes a Fem ConstraintTransform object'''
     obj = doc.addObject("Fem::ConstraintTransform", name)
-    return obj
-
-
-def makeConstraintElectrostaticPotential(doc, name="ConstraintElectrostaticPotential"):
-    '''makeConstraintTransform(document, [name]): makes a Fem ConstraintTransform object'''
-    obj = doc.addObject("Fem::ConstraintPython", name)
-    import PyObjects._FemConstraintElectrostaticPotential
-    PyObjects._FemConstraintElectrostaticPotential.Proxy(obj)
-    if FreeCAD.GuiUp:
-        import PyGui._ViewProviderFemConstraintElectrostaticPotential
-        PyGui._ViewProviderFemConstraintElectrostaticPotential.ViewProxy(obj.ViewObject)
     return obj
 
 
