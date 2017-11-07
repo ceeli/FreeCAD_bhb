@@ -62,7 +62,7 @@ class _CommandFemSolverCalculix(FemCommands):
                 FreeCADGui.doCommand("solver.MaterialNonlinearity = 'nonlinear'")
                 FreeCADGui.doCommand("FemGui.getActiveAnalysis().addObject(solver)")
             else:
-            FreeCADGui.doCommand("FemGui.getActiveAnalysis().addObject(ObjectsFem.makeSolverCalculix(FreeCAD.ActiveDocument))")
+                FreeCADGui.doCommand("FemGui.getActiveAnalysis().addObject(ObjectsFem.makeSolverCalculix(FreeCAD.ActiveDocument))")
         else:
             analysis = FemGui.getActiveAnalysis()
             FreeCAD.ActiveDocument.openTransaction("Create CalculiX solver object")
