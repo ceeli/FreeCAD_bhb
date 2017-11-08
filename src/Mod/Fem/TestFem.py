@@ -396,6 +396,7 @@ class FemTest(unittest.TestCase):
         analysis.addObject(ObjectsFem.makeEquationFlow(doc, sol))
         analysis.addObject(ObjectsFem.makeEquationFluxsolver(doc, sol))
         analysis.addObject(ObjectsFem.makeEquationHeat(doc, sol))
+        # TODO the equations show up twice on Tree (on solver and on analysis), if they are added to the analysis group
 
         doc.recompute()
         self.assertEqual(len(analysis.Group), get_defmake_count() - 1)  # because of the analysis itself count -1
