@@ -68,7 +68,7 @@ def makeConstraintDisplacement(doc, name="ConstraintDisplacement"):
 
 
 def makeConstraintElectrostaticPotential(doc, name="ConstraintElectrostaticPotential"):
-    '''makeConstraintTransform(document, [name]): makes a Fem ConstraintTransform object'''
+    '''makeConstraintElectrostaticPotential(document, [name]): makes a Fem ElectrostaticPotential object'''
     obj = doc.addObject("Fem::ConstraintPython", name)
     import PyObjects._FemConstraintElectrostaticPotential
     PyObjects._FemConstraintElectrostaticPotential.Proxy(obj)
