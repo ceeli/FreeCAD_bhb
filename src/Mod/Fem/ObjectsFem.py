@@ -372,6 +372,12 @@ def makeEquationFlow(doc, base_solver):
     return obj
 
 
+def makeEquationFluxsolver(doc, base_solver):
+    '''makeEquationFluxsolver(document, base_solver): creates a FEM fluxsolver equation for a solver'''
+    obj = doc.SolverElmer.addObject(doc.SolverElmer.Proxy.createEquation(doc.SolverElmer.Document, 'Fluxsolver'))[0]
+    return obj
+
+
 def makeEquationHeat(doc, base_solver):
     '''makeEquationHeat(document, base_solver): creates a  FEM heat equation for a solver'''
     obj = doc.SolverElmer.addObject(doc.SolverElmer.Proxy.createEquation(doc.SolverElmer.Document, 'Heat'))[0]

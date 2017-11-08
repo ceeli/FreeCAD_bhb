@@ -394,6 +394,7 @@ class FemTest(unittest.TestCase):
         analysis.addObject(ObjectsFem.makeEquationElasticity(doc, sol))
         analysis.addObject(ObjectsFem.makeEquationElectrostatic(doc, sol))
         analysis.addObject(ObjectsFem.makeEquationFlow(doc, sol))
+        analysis.addObject(ObjectsFem.makeEquationFluxsolver(doc, sol))
         analysis.addObject(ObjectsFem.makeEquationHeat(doc, sol))
 
         doc.recompute()
