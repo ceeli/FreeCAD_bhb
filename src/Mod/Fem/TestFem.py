@@ -660,12 +660,16 @@ class FemCcxAnalysisTest(unittest.TestCase):
         analysis.addObject(mesh_gmsh)
         self.active_doc.removeObject(mesh_object.Name)
 
+        fcc_print(os.listdir(static2_analysis_dir))
+
         fcc_print('machine_elmer')
         machine_elmer = solver_elmer_object.Proxy.createMachine(solver_elmer_object, static2_analysis_dir, True)
         fcc_print(machine_elmer.testmode)
         machine_elmer.target = femsolver.run.PREPARE
         machine_elmer.start()
         machine_elmer.join()  # wait for the machine to finish.
+
+        fcc_print(os.listdir(static2_analysis_dir))
 
         fcc_print('Test writing STARTINFO file')
         fcc_print('Comparing {} to {}'.format(test_file_dir_elmer + 'ELMERSOLVER_STARTINFO', static2_analysis_dir + 'ELMERSOLVER_STARTINFO'))
