@@ -34,6 +34,7 @@ from FreeCAD import Units
 import subprocess
 import tempfile
 from platform import system
+import collections
 
 
 class FemGmshTools():
@@ -223,7 +224,9 @@ class FemGmshTools():
         print('  ' + self.gmsh_bin)
 
     def get_group_data(self):
-        self.group_elements = {}
+        self.group_elements = collections.OrderedDict()
+        # the standard Python dictionary is not ordered but we need an order for making a unit test
+
         # TODO: solids, faces, edges and vertexes don't seem to work together in one group,
         #       some print or make them work together
 
