@@ -4,10 +4,10 @@
 Merge "/tmp/tmp0TVZbM.brep";
 
 // group data
-Physical Volume("Solid1") = {1};
-Physical Surface("Face6") = {6};
 Physical Surface("Face1") = {1};
 Physical Surface("Face2") = {2};
+Physical Surface("Face6") = {6};
+Physical Volume("Solid1") = {1};
 
 // Characteristic Length
 // no boundary layer settings for this mesh
