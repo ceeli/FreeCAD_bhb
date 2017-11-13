@@ -150,6 +150,8 @@ class Writer(object):
         os.close(unvGmshFd)
 
         tools = FemGmshTools.FemGmshTools(mesh)
+        print(type(groups))
+        print(groups)
         tools.group_elements = {g: [g] for g in groups}
         print(tools.group_elements)  # debug
         tools.ele_length_map = {}

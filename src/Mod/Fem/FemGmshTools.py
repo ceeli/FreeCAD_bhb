@@ -430,10 +430,12 @@ class FemGmshTools():
         geo.write("\n")
         if self.group_elements:
             # print('  We are going to have to find elements to make mesh groups for.')
+            print(self.group_elements)
             geo.write("// group data\n")
             # we use the element name of FreeCAD which starts with 1 (example: 'Face1'), same as Gmsh
             for group in sorted(self.group_elements.keys()):  # for unit test we need them to have a fixed order
                 gdata = self.group_elements[group]
+                print(group)
                 # print(gdata)
                 # geo.write("// " + group + "\n")
                 ele_nr = ''
