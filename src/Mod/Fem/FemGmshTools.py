@@ -224,8 +224,6 @@ class FemGmshTools():
 
     def get_group_data(self):
         self.group_elements = {}
-        # the standard Python dictionary is not ordered but we need an order for making a unit test
-
         # TODO: solids, faces, edges and vertexes don't seem to work together in one group,
         #       some print or make them work together
 
@@ -430,12 +428,10 @@ class FemGmshTools():
         geo.write("\n")
         if self.group_elements:
             # print('  We are going to have to find elements to make mesh groups for.')
-            print(self.group_elements)
             geo.write("// group data\n")
-            # we use the element name of FreeCAD which starts with 1 (example: 'Face1'), same as Gmsh
+            # we use the element name of FreeCAD which starts with 1 (example: 'Face1'), same as GMSH
             for group in sorted(self.group_elements.keys()):  # for unit test we need them to have a fixed order
                 gdata = self.group_elements[group]
-                print(group)
                 # print(gdata)
                 # geo.write("// " + group + "\n")
                 ele_nr = ''
