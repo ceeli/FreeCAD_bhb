@@ -78,7 +78,7 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
         return self.file_name
 
     def write_calculix_one_input_file(self):
-        self.femmesh.writeABAQUS(self.file_name, 1, False)
+        self.femmesh.writeABAQUS(self.file_name, 2, False)
 
         # reopen file with "append" and add the analysis definition
         inpfile = open(self.file_name, 'a')
@@ -178,7 +178,7 @@ class FemInputWriterCcx(FemInputWriter.FemInputWriter):
         name = self.file_name[:-4]
         include_name = self.main_file_name[:-4]
 
-        self.femmesh.writeABAQUS(name + "_Node_Elem_sets.inp", 1, False)
+        self.femmesh.writeABAQUS(name + "_Node_Elem_sets.inp", 2, False)
         inpfileNodesElem = open(name + "_Node_Elem_sets.inp", 'a')
         inpfileNodesElem.write('\n***********************************************************\n')
         inpfileNodesElem.close()
