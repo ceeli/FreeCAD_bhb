@@ -69,13 +69,17 @@ def All():
     tests += [ "MeshTestsApp",
                "TestSketcherApp",
                "TestPartApp",
-               "TestPartDesignApp"]
+               "TestPartDesignApp",
+               "TestSpreadsheet",
+               "TestPathApp" ]
 
     # gui tests of modules
     if (FreeCAD.GuiUp == 1):
         tests += [ "TestSketcherGui",
                    "TestPartGui",
-                   "TestPartDesignGui" ]
+                   "TestPartDesignGui",
+                   "TestDraft",
+                   "TestArch" ]
 
     suite = unittest.TestSuite()
 
