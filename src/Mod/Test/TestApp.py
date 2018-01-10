@@ -66,11 +66,13 @@ def All():
                    "Menu" ]
 
     # add the module tests
-    tests += [ "MeshTestsApp",
+    tests += [ "TestFem",
+               "MeshTestsApp",
                "TestSketcherApp",
                "TestPartApp",
                "TestPartDesignApp",
                "TestSpreadsheet",
+               "TestTechDrawApp",
                "TestPathApp" ]
 
     # gui tests of modules
