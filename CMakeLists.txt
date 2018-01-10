@@ -276,7 +276,7 @@ OPTION(BUILD_SHOW "Build the FreeCAD Show module (helper module for visibility a
 OPTION(BUILD_SKETCHER "Build the FreeCAD sketcher module" OFF)
 OPTION(BUILD_SPREADSHEET "Build the FreeCAD spreadsheet module" OFF)
 OPTION(BUILD_START "Build the FreeCAD start module" OFF)
-OPTION(BUILD_TEST "Build the FreeCAD test module" OFF)
+OPTION(BUILD_TEST "Build the FreeCAD test module" ON)
 OPTION(BUILD_TECHDRAW "Build the FreeCAD Technical Drawing module" OFF)
 OPTION(BUILD_TUX "Build the FreeCAD Tux module" OFF)
 OPTION(BUILD_WEB "Build the FreeCAD web module" OFF)
