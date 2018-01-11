@@ -1339,7 +1339,6 @@ class SolverFrameWorkTest(unittest.TestCase):
         machine_elmer.start()
         machine_elmer.join()  # wait for the machine to finish.
 
-        '''
         fcc_print('Test writing STARTINFO file')
         fcc_print('Comparing {} to {}'.format(test_file_dir_elmer + 'ELMERSOLVER_STARTINFO', solverframework_analysis_dir + 'ELMERSOLVER_STARTINFO'))
         ret = compare_files(test_file_dir_elmer + 'ELMERSOLVER_STARTINFO', solverframework_analysis_dir + 'ELMERSOLVER_STARTINFO')
@@ -1354,7 +1353,6 @@ class SolverFrameWorkTest(unittest.TestCase):
         fcc_print('Comparing {} to {}'.format(test_file_dir_elmer + 'group_mesh.geo', solverframework_analysis_dir + 'group_mesh.geo'))
         ret = compare_files(test_file_dir_elmer + 'group_mesh.geo', solverframework_analysis_dir + 'group_mesh.geo')
         self.assertFalse(ret, "GMSH geo write file test failed.\n{}".format(ret))
-        '''
 
         fcc_print('Save FreeCAD file for static2 analysis to {}...'.format(solverframework_save_fc_file))
         self.active_doc.saveAs(solverframework_save_fc_file)
