@@ -6,6 +6,8 @@ find_package(GTest REQUIRED)
 add_executable(
     FreeCADTest
     FreeCADTest.cpp
+    TestAnalysis.cpp
+    FCTest.cpp
 )
 
 target_link_libraries(
