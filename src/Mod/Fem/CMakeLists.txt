@@ -308,3 +308,5 @@ if(BUILD_GUI)
     # install Python packages (for make install)
     INSTALL(FILES ${FemGuiScripts_SRCS} DESTINATION Mod/Fem/femguiobjects)
 endif(BUILD_GUI)
+
+add_subdirectory(Test)
