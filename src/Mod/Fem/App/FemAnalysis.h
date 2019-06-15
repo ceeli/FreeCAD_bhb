@@ -33,7 +33,7 @@ namespace Fem {
 /**
  * @brief Container of objects relevant to one simulation.
  * 
- * @detailed
+ * @details
  *  A Analysis contains all objects nessesary for a complete specification
  *  of a simulation. After computing it also contains the result of the
  *  simulation. The Analysis object is just a container. It is not reponsible
@@ -75,7 +75,7 @@ protected:
     /**
      * @brief Retain compability with old "Member" property.
      *
-     * @detail
+     * @details
      *  In an older version of FreeCAD FemAnalysis handles it's member itself
      *  in a property called "Member". Now this is handled in the "Group"
      *  property of DocumentObjectGroup. This methods translates old files
