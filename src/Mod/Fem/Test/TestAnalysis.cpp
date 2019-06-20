@@ -33,7 +33,7 @@ TEST_F(AnalysisDocument, UidPersistent)
         doc->addObject("Fem::FemAnalysis"));
     ASSERT_NE(nullptr, obj);
     std::string saved {obj->Uid.getValueStr()};
-    saveAndLoad(&doc);
+    saveAndLoad();
     std::string loaded {obj->Uid.getValueStr()};
     ASSERT_EQ(saved, loaded);
 }
