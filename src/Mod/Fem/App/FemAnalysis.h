@@ -52,7 +52,7 @@ class AppFemExport FemAnalysis : public App::DocumentObjectGroup {
     PROPERTY_HEADER(Fem::FemAnalysis);
 
 public:
-    /*
+    /**
      * Uses Base::Uuid to initialize the Uid property to a newly generated
      * unique id because PropertyUUID doesn't initialize itself.
      */
