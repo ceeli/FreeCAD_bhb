@@ -7,6 +7,7 @@ add_executable(
     FreeCADTest
     FreeCADTest.cpp
     TestAnalysis.cpp
+    TestFCTest.cpp
     FCTest.cpp
 )
 
