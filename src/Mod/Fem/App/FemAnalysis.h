@@ -39,9 +39,9 @@ namespace Fem {
  *  simulation. The Analysis object is just a container. It is not reponsible
  *  for anything else like executing the simulation.
  *
- *  The Analysis class is essentially a DocumentObjectGroup. It handles all
- *  the container stuff. The difference is that the Analysis document object
- *  uses a different ViewProvider, has a Uid property and does some
+ *  The Analysis class is essentially a App::DocumentObjectGroup. It handles
+ *  all the container stuff. The difference is that the Analysis document
+ *  object uses a different ViewProvider, has a Uid property and does some
  *  compability handling via handleChangedPropertyName.
  *
  *  This implies that it is not checked which objects are put into the
