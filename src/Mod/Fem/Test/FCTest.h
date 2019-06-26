@@ -1,3 +1,8 @@
+/**
+ * @file
+ * @brief Support library for C++ Unit Tests
+ */
+
 #include "FCConfig.h"
 #include <gtest/gtest.h>
 
