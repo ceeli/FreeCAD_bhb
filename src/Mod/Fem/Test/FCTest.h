@@ -1,6 +1,10 @@
 #include "FCConfig.h"
 #include <gtest/gtest.h>
+
+#include <Base/Vector3D.h>
 #include <App/Document.h>
+
+#include <gp_Vec.hxx>
 
 
 /**
@@ -46,3 +50,9 @@ class DocumentTest : public ::testing::Test {
          */
         App::Document* doc;
 };
+
+bool operator==(Base::Vector3d fc, gp_Vec oc);
+bool operator!=(Base::Vector3d fc, gp_Vec oc);
+bool operator==(gp_Vec oc, Base::Vector3d fc);
+bool operator!=(gp_Vec oc, Base::Vector3d fc);
+std::ostream& operator<<(std::ostream& stream, Base::Vector3d const& vec);
