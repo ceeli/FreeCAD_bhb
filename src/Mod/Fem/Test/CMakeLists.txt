@@ -8,6 +8,7 @@ add_executable(
     FreeCADTest.cpp
     TestAnalysis.cpp
     TestFCTest.cpp
+    TestConstraint.cpp
     FCTest.cpp
 )
 
@@ -15,10 +16,15 @@ target_link_libraries(
     FreeCADTest
     FreeCADApp
     Fem
+    Part
     GTest::GTest
     ${Qt5Core_LIBRARIES}
     ${Qt5Xml_LIBRARIES}
     ${Python_LIBRARIES}
+)
+
+include_directories(
+    ${OCC_INCLUDE_DIR}
 )
 
 SET_BIN_DIR(FreeCADTest FreeCADTest)
