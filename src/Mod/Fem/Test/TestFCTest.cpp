@@ -5,6 +5,9 @@
 
 #include <gtest/gtest.h>
 
+#include <Base/Exception.h>
+#include <Base/Vector3D.h>
+#include <App/DocumentObjectGroup.h>
 #include <App/Application.h>
 #include <App/Document.h>
 #include <App/FeatureTest.h>
@@ -49,4 +52,44 @@ TEST_F(FCTest, saveAndLoad)
     obj = static_cast<App::FeatureTest*>(doc->getObject(name.c_str()));
     ASSERT_EQ(obj->Integer.getValue(), normSaved);
     ASSERT_NE(obj->TypeTransient.getValue(), tranSaved);
+}
+
+TEST_F(FCTest, addObjectMacro)
+{
+    (void)ADD_OBJECT(App::FeatureTest);
+    ASSERT_EQ(doc->countObjectsOfType(App::FeatureTest::getClassTypeId()), 1);
+}
+
+TEST_F(FCTest, addObjectValid)
+{
+    (void)addObject<App::FeatureTest>("App::FeatureTest");
+    ASSERT_EQ(doc->countObjectsOfType(App::FeatureTest::getClassTypeId()), 1);
+}
+
+TEST_F(FCTest, addObjectIncompatible)
+{
+    ASSERT_THROW(
+        addObject<App::DocumentObjectGroup>("App::FeatureTest"),
+        Base::TypeError);
+}
+
+TEST_F(FCTest, addObjectNotDocument1)
+{
+    ASSERT_THROW(
+        addObject<Base::Vector3d>("Base::Vector3d"),
+        Base::TypeError);
+}
+
+TEST_F(FCTest, addObjectNotDocument2)
+{
+    ASSERT_THROW(
+        addObject<App::FeatureTest>("Base::Vector3d"),
+        Base::TypeError);
+}
+
+TEST_F(FCTest, addObjectNonExistent)
+{
+    ASSERT_THROW(
+        addObject<App::FeatureTest>("Ap::Typo"),
+        Base::TypeError);
 }
