@@ -30,10 +30,11 @@ TEST_F(AnalysisDocument, UidIsUnique)
 TEST_F(AnalysisDocument, UidPersistent)
 {
     Fem::FemAnalysis* obj = static_cast<Fem::FemAnalysis*>(
-        doc->addObject("Fem::FemAnalysis"));
+        doc->addObject("Fem::FemAnalysis", "Analysis"));
     ASSERT_NE(nullptr, obj);
     std::string saved {obj->Uid.getValueStr()};
     saveAndLoad();
+    obj = static_cast<Fem::FemAnalysis*>(doc->getObject("Analysis"));
     std::string loaded {obj->Uid.getValueStr()};
     ASSERT_EQ(saved, loaded);
 }
