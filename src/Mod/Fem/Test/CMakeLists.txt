@@ -1,7 +1,8 @@
-find_package (Python COMPONENTS Interpreter Development)
-include_directories("${Python_INCLUDE_DIRS}")
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/3rdParty/googletest src/3rdParty/googletest)
 
-find_package(GTest REQUIRED)
+include_directories(
+    ${PYTHON_INCLUDE_DIRS}
+)
 
 add_executable(
     FreeCADTest
@@ -17,10 +18,10 @@ target_link_libraries(
     FreeCADApp
     Fem
     Part
-    GTest::GTest
+    gtest
     ${Qt5Core_LIBRARIES}
     ${Qt5Xml_LIBRARIES}
-    ${Python_LIBRARIES}
+    #${Python_LIBRARIES}
 )
 
 include_directories(
