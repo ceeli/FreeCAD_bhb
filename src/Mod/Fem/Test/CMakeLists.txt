@@ -1,36 +1,20 @@
-add_subdirectory(${PROJECT_SOURCE_DIR}/src/3rdParty/googletest src/3rdParty/googletest)
-
-include_directories(
-    ${PYTHON_INCLUDE_DIRS}
-)
-
-add_executable(
-    FreeCADTest
-    FreeCADTest.cpp
+add_library(FemTest OBJECT
     TestAnalysis.cpp
     TestFCTest.cpp
     TestConstraint.cpp
-    FCTest.cpp
 )
 
-target_link_libraries(
-    FreeCADTest
-    FreeCADApp
-    Fem
-    Part
-    gtest
-    ${Qt5Core_LIBRARIES}
-    ${Qt5Xml_LIBRARIES}
-    #${Python_LIBRARIES}
+target_link_libraries(FemTest
+    PUBLIC
+        gtest
+    PRIVATE
+        TestLib
+        Part
+        Fem
 )
 
-include_directories(
-    ${OCC_INCLUDE_DIR}
-)
-
-SET_BIN_DIR(FreeCADTest FreeCADTest)
-
-install (
-    TARGETS FreeCADTest
-    RUNTIME DESTINATION bin
+target_include_directories(FemTest
+    PRIVATE
+        ${PYTHON_INCLUDE_DIRS}
+        ${OCC_INCLUDE_DIR}
 )

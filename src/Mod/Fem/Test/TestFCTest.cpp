@@ -1,7 +1,7 @@
 #define AppFemExport
 
 #include "FCConfig.h"
-#include "FCTest.h"
+#include <Test/FCTest.h>
 
 #include <gtest/gtest.h>
 

@@ -51,3 +51,8 @@ std::ostream& operator<<(std::ostream& stream, Base::Vector3d const& vec)
 {
     return stream << "Base::Vector3d(" << vec.x << ", " << vec.y << ", " << vec.z << ")";
 }
+
+int returnFive()
+{
+    return 5;
+}

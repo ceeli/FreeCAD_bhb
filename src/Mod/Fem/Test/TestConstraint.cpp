@@ -4,7 +4,7 @@
 #include <iostream>
 #include "FCConfig.h"
 #include <gtest/gtest.h>
-#include "FCTest.h"
+#include <Test/FCTest.h>
 #include <App/ComplexGeoData.h>
 #include <App/DocumentObject.h>
 #include <Mod/Part/App/TopoShape.h>
