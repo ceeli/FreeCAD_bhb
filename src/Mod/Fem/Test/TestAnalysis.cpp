@@ -7,8 +7,7 @@
 #include <App/Document.h>
 #include <Mod/Fem/App/FemAnalysis.h>
 #include <Base/Uuid.h>
-#include "FCTest.h"
-
+#include <Test/FCTest.h>
 
 class AnalysisDocument :public DocumentTest {};
 
