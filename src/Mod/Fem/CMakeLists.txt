@@ -137,6 +137,11 @@ SET(FemTests_SRCS
     femtest/utilstest.py
 )
 
+SET(FemTestsNew_SRCS
+    femtest_new/__init__.py
+    femtest_new/test_tools.py
+)
+
 SET(FemTestsFiles_SRCS
     femtest/testfiles/__init__.py
 )
@@ -232,6 +237,7 @@ SET(FemAllScripts
     ${FemSolverFenics_SRCS}
     ${FemSolverZ88_SRCS}
     ${FemTests_SRCS}
+    ${FemTestsNew_SRCS}
     ${FemTestsFiles_SRCS}
     ${FemTestsCcx_SRCS}
     ${FemTestsElmer_SRCS}
