@@ -255,11 +255,11 @@ def get_pref_working_dir(solver_obj):
     from femsolver import settings
     from femsolver import run
     dir_setting = settings.get_dir_setting()
-    if dir_setting == settings.TEMPORARY:
+    if dir_setting == settings.DirSetting.TEMPORARY:
         setting_working_dir = run._getTempDir(solver_obj)
-    elif dir_setting == settings.BESIDE:
+    elif dir_setting == settings.DirSetting.BESIDE:
         setting_working_dir = run._getBesideDir(solver_obj)
-    elif dir_setting == settings.CUSTOM:
+    elif dir_setting == settings.DirSetting.CUSTOM:
         setting_working_dir = run._getCustomDir(solver_obj)
     else:
         setting_working_dir = ''
