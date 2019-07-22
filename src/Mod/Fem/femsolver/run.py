@@ -18,13 +18,20 @@
 # *   USA                                                                   *
 # *                                                                         *
 # ***************************************************************************
+""" Execute Solver and obtain Reports and Results.
+
+Integral part of the Solver Framework which contains components responsible for
+executing the solver in the background. Also provides an asynchronous
+communication system with the solver running in the background. The purpose of
+this module is to be as generic as possible. It can execute every solver
+supported by the fem workbench. The threading and communication support is
+mainly implemented by the :mod:`femsolver.task` and :mod:`femsolver.signal`
+modules.
+"""
 
 __title__ = "FreeCAD FEM solver run"
 __author__ = "Markus Hovorka"
 __url__ = "http://www.freecadweb.org"
-
-## \addtogroup FEM
-#  @{
 
 import os
 import os.path
@@ -55,6 +62,35 @@ _dirTypes = {}
 
 
 def run_fem_solver(solver, working_dir=None):
+    """ Execute *solver* of the solver framwork.
+
+    Uses :meth:`getMachine <femsolver.solverbase.Proxy.getMachine>` to obtain a
+    :class:`Machine` instance of the solver. It than executes the Machine with
+    using the ``RESULTS`` target (see :class:`Machine` for infos about
+    different targets). This method is blocking, it waits for the solver to
+    finished before returning. Be aware of :class:`Machine` caching when using
+    the function.
+
+    :param solver:
+        A document object which must be a famework complient solver. This means
+        that it should be derived from the document object provided by
+        :mod:`femsolver.solverbase` and implement all required methods
+        correctely. Of particular importance is :meth:`getMachine
+        <femsolver.solverbase.Proxy.getMachine>` as it is used by this method
+        the get the :class:`Machine` used to execute the solver.
+
+    :param working_dir:
+        If specified it overwrites the automatic and user configurable working
+        directory management of the Solver framework. Should always be a
+        absolute path because the location of the binary is not consistent
+        among platforms. If ``None`` the automatic working directory management
+        is used.
+
+    :note:
+        There is some legacy code to execute the old Calculix solver
+        (pre-framework) which behaives differently because it doesn't use a
+        :class:`Machine`.
+    """
 
     if solver.Proxy.Type == 'Fem::FemSolverCalculixCcxTools':
         App.Console.PrintMessage("CalxuliX ccx tools solver!\n")
@@ -113,6 +149,19 @@ def run_fem_solver(solver, working_dir=None):
 
 
 def getMachine(solver, path=None):
+    """ Get or create :class:`Machine` using caching mechanism.
+
+    :param solver:
+        A document object which must be a famework complient solver. This means
+        that it should be derived from the document object provided by
+        :mod:`femsolver.solverbase` and implement all required methods
+        correctely. Of particular importance is :meth:`getMachine
+        <femsolver.solverbase.Proxy.getMachine>` as it is used by this method
+        to create a new :class:`Machine` on cache miss.
+
+    :param path:
+        A valid filesystem path which shall be associetad with the machine.
+    """
     _DocObserver.attach()
     m = _machines.get(solver)
     if m is None or not _isPathValid(m, path):
@@ -120,113 +169,12 @@ def getMachine(solver, path=None):
     return m
 
 
-def _isPathValid(m, path):
-    t = _dirTypes.get(m.directory)  # setting default None
-    setting = settings.get_dir_setting()
-    if path is not None:
-        return t is None and m.directory == path
-    if setting == settings.BESIDE:
-        if t == settings.BESIDE:
-            base = os.path.split(m.directory.rstrip("/"))[0]
-            return base == _getBesideBase(m.solver)
-        return False
-    if setting == settings.TEMPORARY:
-        return t == settings.TEMPORARY
-    if setting == settings.CUSTOM:
-        if t == settings.CUSTOM:
-            firstBase = os.path.split(m.directory.rstrip("/"))[0]
-            customBase = os.path.split(firstBase)[0]
-            return customBase == _getCustomBase(m.solver)
-        return False
+class MustSaveError(Exception):
+    pass
 
 
-def _createMachine(solver, path, testmode):
-    global _dirTypes
-    setting = settings.get_dir_setting()
-    if path is not None:
-        _dirTypes[path] = None
-    elif setting == settings.BESIDE:
-        path = _getBesideDir(solver)
-        _dirTypes[path] = settings.BESIDE
-    elif setting == settings.TEMPORARY:
-        path = _getTempDir(solver)
-        _dirTypes[path] = settings.TEMPORARY
-    elif setting == settings.CUSTOM:
-        path = _getCustomDir(solver)
-        _dirTypes[path] = settings.CUSTOM
-    m = solver.Proxy.createMachine(solver, path, testmode)
-    oldMachine = _machines.get(solver)
-    if oldMachine is not None and _dirTypes.get(oldMachine.directory) is not None:
-        del _dirTypes[oldMachine.directory]
-    _machines[solver] = m
-    return m
-
-
-def _getTempDir(solver):
-    return tempfile.mkdtemp(prefix="fem")
-
-
-def _getBesideDir(solver):
-    base = _getBesideBase(solver)
-    specificPath = os.path.join(base, solver.Label)
-    specificPath = _getUniquePath(specificPath)
-    if not os.path.isdir(specificPath):
-        os.makedirs(specificPath)
-    return specificPath
-
-
-def _getBesideBase(solver):
-    fcstdPath = solver.Document.FileName
-    if fcstdPath == "":
-        error_message = (
-            "Please save the file before executing the solver. "
-            "This must be done because the location of the working "
-            "directory is set to \"Beside *.FCStd File\"."
-        )
-        App.Console.PrintError(error_message + "\n")
-        if App.GuiUp:
-            QtGui.QMessageBox.critical(
-                FreeCADGui.getMainWindow(),
-                "Can't start Solver",
-                error_message
-            )
-        raise MustSaveError()
-    return os.path.splitext(fcstdPath)[0]
-
-
-def _getCustomDir(solver):
-    base = _getCustomBase(solver)
-    specificPath = os.path.join(
-        base, solver.Document.Name, solver.Label)
-    specificPath = _getUniquePath(specificPath)
-    if not os.path.isdir(specificPath):
-        os.makedirs(specificPath)
-    return specificPath
-
-
-def _getCustomBase(solver):
-    path = settings.get_custom_dir()
-    if not os.path.isdir(path):
-        error_message = "Selected working directory doesn't exist."
-        App.Console.PrintError(error_message + "\n")
-        if App.GuiUp:
-            QtGui.QMessageBox.critical(
-                FreeCADGui.getMainWindow(),
-                "Can't start Solver",
-                error_message
-            )
-        raise DirectoryDoesNotExistError("Invalid path")
-    return path
-
-
-def _getUniquePath(path):
-    postfix = 1
-    if path in _dirTypes:
-        path += "_%03d" % postfix
-    while path in _dirTypes:
-        postfix += 1
-        path = path[:-4] + "_%03d" % postfix
-    return path
+class DirectoryDoesNotExistError(Exception):
+    pass
 
 
 class BaseTask(task.Thread):
@@ -515,11 +463,111 @@ class _DocObserver(object):
         return False
 
 
-class MustSaveError(Exception):
-    pass
+def _isPathValid(m, path):
+    t = _dirTypes.get(m.directory)  # setting default None
+    setting = settings.get_dir_setting()
+    if path is not None:
+        return t is None and m.directory == path
+    if setting == settings.BESIDE:
+        if t == settings.BESIDE:
+            base = os.path.split(m.directory.rstrip("/"))[0]
+            return base == _getBesideBase(m.solver)
+        return False
+    if setting == settings.TEMPORARY:
+        return t == settings.TEMPORARY
+    if setting == settings.CUSTOM:
+        if t == settings.CUSTOM:
+            firstBase = os.path.split(m.directory.rstrip("/"))[0]
+            customBase = os.path.split(firstBase)[0]
+            return customBase == _getCustomBase(m.solver)
+        return False
 
 
-class DirectoryDoesNotExistError(Exception):
-    pass
+def _createMachine(solver, path, testmode):
+    global _dirTypes
+    setting = settings.get_dir_setting()
+    if path is not None:
+        _dirTypes[path] = None
+    elif setting == settings.BESIDE:
+        path = _getBesideDir(solver)
+        _dirTypes[path] = settings.BESIDE
+    elif setting == settings.TEMPORARY:
+        path = _getTempDir(solver)
+        _dirTypes[path] = settings.TEMPORARY
+    elif setting == settings.CUSTOM:
+        path = _getCustomDir(solver)
+        _dirTypes[path] = settings.CUSTOM
+    m = solver.Proxy.createMachine(solver, path, testmode)
+    oldMachine = _machines.get(solver)
+    if oldMachine is not None and _dirTypes.get(oldMachine.directory) is not None:
+        del _dirTypes[oldMachine.directory]
+    _machines[solver] = m
+    return m
 
+
+def _getTempDir(solver):
+    return tempfile.mkdtemp(prefix="fem")
+
+
+def _getBesideDir(solver):
+    base = _getBesideBase(solver)
+    specificPath = os.path.join(base, solver.Label)
+    specificPath = _getUniquePath(specificPath)
+    if not os.path.isdir(specificPath):
+        os.makedirs(specificPath)
+    return specificPath
+
+
+def _getBesideBase(solver):
+    fcstdPath = solver.Document.FileName
+    if fcstdPath == "":
+        error_message = (
+            "Please save the file before executing the solver. "
+            "This must be done because the location of the working "
+            "directory is set to \"Beside *.FCStd File\"."
+        )
+        App.Console.PrintError(error_message + "\n")
+        if App.GuiUp:
+            QtGui.QMessageBox.critical(
+                FreeCADGui.getMainWindow(),
+                "Can't start Solver",
+                error_message
+            )
+        raise MustSaveError()
+    return os.path.splitext(fcstdPath)[0]
+
+
+def _getCustomDir(solver):
+    base = _getCustomBase(solver)
+    specificPath = os.path.join(
+        base, solver.Document.Name, solver.Label)
+    specificPath = _getUniquePath(specificPath)
+    if not os.path.isdir(specificPath):
+        os.makedirs(specificPath)
+    return specificPath
+
+
+def _getCustomBase(solver):
+    path = settings.get_custom_dir()
+    if not os.path.isdir(path):
+        error_message = "Selected working directory doesn't exist."
+        App.Console.PrintError(error_message + "\n")
+        if App.GuiUp:
+            QtGui.QMessageBox.critical(
+                FreeCADGui.getMainWindow(),
+                "Can't start Solver",
+                error_message
+            )
+        raise DirectoryDoesNotExistError("Invalid path")
+    return path
+
+
+def _getUniquePath(path):
+    postfix = 1
+    if path in _dirTypes:
+        path += "_%03d" % postfix
+    while path in _dirTypes:
+        postfix += 1
+        path = path[:-4] + "_%03d" % postfix
+    return path
 ##  @}
