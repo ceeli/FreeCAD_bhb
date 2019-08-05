@@ -139,6 +139,7 @@ SET(FemTests_SRCS
 
 SET(FemTestsNew_SRCS
     femtest_new/__init__.py
+    femtest_new/support.py
     femtest_new/test_tools.py
 )
 
