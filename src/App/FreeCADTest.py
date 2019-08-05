@@ -38,7 +38,7 @@ import FreeCAD
 import TestApp
 
 testCase = FreeCAD.ConfigGet("TestCase")
-
+FreeCAD.Console.SetStatus("Console", "Msg", 0)
 testResult = TestApp.TestText(testCase)
 
 Log ("FreeCAD test done\n")
