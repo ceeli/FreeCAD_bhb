@@ -38,7 +38,7 @@ import sys
 import FreeCAD
 
 
-def createObject(doc, name, proxy, viewProxy):
+def createObject(doc, name, proxy, viewProxy=None):
     """ Add python object to document using python type string.
 
     Add a document object suitable for the *proxy* and the *viewProxy* to *doc*
@@ -57,7 +57,7 @@ def createObject(doc, name, proxy, viewProxy):
     """
     obj = doc.addObject(proxy.BaseType, name)
     proxy(obj)
-    if FreeCAD.GuiUp:
+    if FreeCAD.GuiUp and viewProxy is not None:
         viewProxy(obj.ViewObject)
     return obj
 
