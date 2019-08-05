@@ -195,8 +195,8 @@ class GmshTools():
         elif self.dimension == '1D':
             self.dimension = '1'
         else:
-            print('Error in dimension')
-        print('  ElementDimension: ' + self.dimension)
+            FreeCAD.Console.PrintError('Error in dimension\n')
+        FreeCAD.Console.PrintLog('  ElementDimension: ' + self.dimension + "\n")
 
     def get_tmp_file_paths(self):
         if system() == "Linux":
@@ -208,14 +208,14 @@ class GmshTools():
         tmpdir = tempfile.gettempdir()
         # geometry file
         self.temp_file_geometry = tmpdir + path_sep + self.part_obj.Name + '_Geometry.brep'
-        print('  ' + self.temp_file_geometry)
+        FreeCAD.Console.PrintLog('  ' + self.temp_file_geometry + '\n')
         # mesh file
         self.mesh_name = self.part_obj.Name + '_Mesh_TmpGmsh'
         self.temp_file_mesh = tmpdir + path_sep + self.mesh_name + '.unv'
-        print('  ' + self.temp_file_mesh)
+        FreeCAD.Console.PrintLog('  ' + self.temp_file_mesh + '\n')
         # Gmsh input file
         self.temp_file_geo = tmpdir + path_sep + 'shape2mesh.geo'
-        print('  ' + self.temp_file_geo)
+        FreeCAD.Console.PrintLog('  ' + self.temp_file_geo + '\n')
 
     def get_gmsh_command(self):
         gmsh_std_location = FreeCAD.ParamGet(
@@ -263,7 +263,7 @@ class GmshTools():
                     self.gmsh_bin = FreeCAD.getHomePath() + "bin/gmsh.exe"
                 else:
                     self.gmsh_bin = "gmsh"
-        print('  ' + self.gmsh_bin)
+        FreeCAD.Console.PrintLog('  ' + self.gmsh_bin)
 
     def get_group_data(self):
         # TODO: solids, faces, edges and vertexes don't seem to work together in one group,
