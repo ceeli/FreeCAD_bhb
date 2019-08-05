@@ -399,17 +399,11 @@ class _DocObserver(object):
     def _deleteMachine(self, obj):
         m = _machines[obj]
         t = _dirTypes[m.directory]
-
-        def delegate():
-            m.join()
-            if t == settings.TEMPORARY:
-                shutil.rmtree(m.directory)
-            del _dirTypes[m.directory]
-            del _machines[obj]
         m.abort()
-        thread = threading.Thread(target=delegate)
-        thread.daemon = False
-        thread.start()
+        if t == settings.DirSetting.TEMPORARY:
+            shutil.rmtree(m.directory)
+        del _machines[obj]
+        del _dirTypes[m.directory]
 
     def _checkEquation(self, obj):
         for o in obj.Document.Objects:
@@ -468,15 +462,15 @@ def _isPathValid(m, path):
     setting = settings.get_dir_setting()
     if path is not None:
         return t is None and m.directory == path
-    if setting == settings.BESIDE:
-        if t == settings.BESIDE:
+    if setting == settings.DirSetting.BESIDE:
+        if t == settings.DirSetting.BESIDE:
             base = os.path.split(m.directory.rstrip("/"))[0]
             return base == _getBesideBase(m.solver)
         return False
-    if setting == settings.TEMPORARY:
-        return t == settings.TEMPORARY
-    if setting == settings.CUSTOM:
-        if t == settings.CUSTOM:
+    if setting == settings.DirSetting.TEMPORARY:
+        return t == settings.DirSetting.TEMPORARY
+    if setting == settings.DirSetting.CUSTOM:
+        if t == settings.DirSetting.CUSTOM:
             firstBase = os.path.split(m.directory.rstrip("/"))[0]
             customBase = os.path.split(firstBase)[0]
             return customBase == _getCustomBase(m.solver)
@@ -488,15 +482,15 @@ def _createMachine(solver, path, testmode):
     setting = settings.get_dir_setting()
     if path is not None:
         _dirTypes[path] = None
-    elif setting == settings.BESIDE:
+    elif setting == settings.DirSetting.BESIDE:
         path = _getBesideDir(solver)
-        _dirTypes[path] = settings.BESIDE
-    elif setting == settings.TEMPORARY:
+        _dirTypes[path] = settings.DirSetting.BESIDE
+    elif setting == settings.DirSetting.TEMPORARY:
         path = _getTempDir(solver)
-        _dirTypes[path] = settings.TEMPORARY
-    elif setting == settings.CUSTOM:
+        _dirTypes[path] = settings.DirSetting.TEMPORARY
+    elif setting == settings.DirSetting.CUSTOM:
         path = _getCustomDir(solver)
-        _dirTypes[path] = settings.CUSTOM
+        _dirTypes[path] = settings.DirSetting.CUSTOM
     m = solver.Proxy.createMachine(solver, path, testmode)
     oldMachine = _machines.get(solver)
     if oldMachine is not None and _dirTypes.get(oldMachine.directory) is not None:
