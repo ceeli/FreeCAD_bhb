@@ -141,6 +141,12 @@ SET(FemTestsNew_SRCS
     femtest_new/__init__.py
     femtest_new/support.py
     femtest_new/test_tools.py
+    femtest_new/test_problems.py
+)
+
+SET(FemTestsFilesNew_SRCS
+    femtest_new/files/cantilever_end_load.FCStd
+    femtest_new/files/cantilever_uniform_load.FCStd
 )
 
 SET(FemTestsFiles_SRCS
@@ -239,6 +245,7 @@ SET(FemAllScripts
     ${FemSolverZ88_SRCS}
     ${FemTests_SRCS}
     ${FemTestsNew_SRCS}
+    ${FemTestsFilesNew_SRCS}
     ${FemTestsFiles_SRCS}
     ${FemTestsCcx_SRCS}
     ${FemTestsElmer_SRCS}
