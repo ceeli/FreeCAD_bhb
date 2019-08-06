@@ -14,6 +14,7 @@ SET(Test_SRCS
     testmakeWireString.py
     TestPythonSyntax.py
     FCTest.py
+    GuiTest.py
 )
 SOURCE_GROUP("" FILES ${Test_SRCS})
 
