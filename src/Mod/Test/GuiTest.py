@@ -9,6 +9,10 @@ import FreeCADGui
 import FCTest
 
 
+class TaskPanelError(Exception):
+    pass
+
+
 class TaskPanelTest(FCTest.DocumentTest):
     """ Unittest test case base for testing task panels. """
 
@@ -16,22 +20,36 @@ class TaskPanelTest(FCTest.DocumentTest):
         FreeCADGui.Control.closeDialog()
         super().tearDown()
 
-    def getTaskPanel(self, name):
-        """ Return the QWidget of the currently open task panel.
+    def loadTaskPanel(self, name):
+        """ Find and load the QWidget of the currently open task panel.
 
         This method searches for a QWidget with the ``objectName`` *name* only
         inside the combo view. This is not the python task panel object but the
         QWidget that is used by it (set as self.form of the task panel object).
 
         :param name: The ``objectName`` of the QWidget of the task panel.
-
-        :returns:
-            QWidget of the currently open task panel or ``None`` if no task
-            panel is open.
         """
         mw = FreeCADGui.getMainWindow()
         cv = mw.findChild(QtGui.QWidget, "Combo View")
-        return cv.findChild(QtGui.QWidget, name)
+        self.form = cv.findChild(QtGui.QWidget, name)
+
+    def getChild(self, name):
+        """ Return QWidget of the task panel named *name*.
+
+        Searches only widgets inside the loaded task panel for a QWidget with
+        the ``objectName`` *name*.
+
+        :param name: the ``objectName`` of the child widget
+
+        :raise TaskPanelError: if no task panel is loaded
+
+        :return:
+            The child widget with the ``objectName`` *name* or ``None`` if no
+            such widget could be found.
+        """
+        if self.form is not None:
+            return self.form.findChild(QtGui.QWidget, name)
+        raise TaskPanelError("no task panel loaded")
 
     def clickButton(self, button):
         """ Click a button above the open task panel.
