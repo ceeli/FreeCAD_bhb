@@ -49,6 +49,17 @@ False if TestResult.__name__ else True
 False if TestCcxTools.__name__ else True
 False if TestSolverFrameWork.__name__ else True
 
+from femtest.testtools import TestCreateObject
+from femtest.testtools import TestFindAnalysisOfMember
+from femtest.testtools import TestGetMember
+from femtest.testtools import TestIsDerivedFrom
+from femtest.testtools import TestGetSingleMember
+from femtest.testtools import TestGetSeveralMember
+from femtest.testtools import TestGetMeshToSolve
+from femtest.testtools import TestTypeOfObj
+from femtest.testtools import TestIsOfType
+from femtest.testtools import TestGetBoundBoxOfAllDocumentShapes
+from femtest.testtools import TestGetRefshapeType
 
 # For more information on how to run a specific test class or a test method see
 # file src/Mod/Test/__init__
