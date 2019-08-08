@@ -1,12 +1,12 @@
 import unittest
 
 import FreeCAD
-from . import FemTestSupport
+from . import support_solver
 import femsolver.elmer.solver
 import femsolver.calculix.solver
 
 
-class TestCantileverEndLoad(FemTestSupport.SolverTest):
+class TestCantileverEndLoad(support_solver.SolverTest):
     """ Simulation of Cantilever with End Load
 
     A beam that is fixed on one side and has a downwards load applied to it on
@@ -51,7 +51,7 @@ class TestCantileverEndLoad(FemTestSupport.SolverTest):
         self.assertResult("Displacement", 0.03)
 
 
-class TestCantileverUniformLoad(FemTestSupport.SolverTest):
+class TestCantileverUniformLoad(support_solver.SolverTest):
     """ Simulation of Cantilever with End Load
 
     A beam that is fixed on one side and has a uniform load it on the top. No

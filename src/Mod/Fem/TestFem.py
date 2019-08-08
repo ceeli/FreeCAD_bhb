@@ -27,15 +27,15 @@
 # Unit test for the FEM module
 # the order should be as follows:
 # common-, object-, mesh-, inout-, ccxtools-, solverframworktests
-from femtest.testcommon import TestFemCommon
-from femtest.testobject import TestObjectCreate
-from femtest.testobject import TestObjectType
-from femtest.testmaterial import TestMaterialUnits
-from femtest.testmesh import TestMeshCommon
-from femtest.testmesh import TestMeshEleTetra10
-from femtest.testresult import TestResult
-from femtest.testccxtools import TestCcxTools
-from femtest.testsolverframework import TestSolverFrameWork
+from femtest.app.test_common import TestFemCommon
+from femtest.app.test_object import TestObjectCreate
+from femtest.app.test_object import TestObjectType
+from femtest.app.test_material import TestMaterialUnits
+from femtest.app.test_mesh import TestMeshCommon
+from femtest.app.test_mesh import TestMeshEleTetra10
+from femtest.app.test_result import TestResult
+from femtest.app.test_ccxtools import TestCcxTools
+from femtest.app.test_solverframework import TestSolverFrameWork
 
 # dummy usage to get flake8 and lgtm quiet
 False if TestFemCommon.__name__ else True
@@ -49,17 +49,17 @@ False if TestResult.__name__ else True
 False if TestCcxTools.__name__ else True
 False if TestSolverFrameWork.__name__ else True
 
-from femtest.testtools import TestCreateObject
-from femtest.testtools import TestFindAnalysisOfMember
-from femtest.testtools import TestGetMember
-from femtest.testtools import TestIsDerivedFrom
-from femtest.testtools import TestGetSingleMember
-from femtest.testtools import TestGetSeveralMember
-from femtest.testtools import TestGetMeshToSolve
-from femtest.testtools import TestTypeOfObj
-from femtest.testtools import TestIsOfType
-from femtest.testtools import TestGetBoundBoxOfAllDocumentShapes
-from femtest.testtools import TestGetRefshapeType
+from femtest.app.test_tools import TestCreateObject
+from femtest.app.test_tools import TestFindAnalysisOfMember
+from femtest.app.test_tools import TestGetMember
+from femtest.app.test_tools import TestIsDerivedFrom
+from femtest.app.test_tools import TestGetSingleMember
+from femtest.app.test_tools import TestGetSeveralMember
+from femtest.app.test_tools import TestGetMeshToSolve
+from femtest.app.test_tools import TestTypeOfObj
+from femtest.app.test_tools import TestIsOfType
+from femtest.app.test_tools import TestGetBoundBoxOfAllDocumentShapes
+from femtest.app.test_tools import TestGetRefshapeType
 
 # For more information on how to run a specific test class or a test method see
 # file src/Mod/Test/__init__
@@ -262,13 +262,12 @@ unittest.TextTestRunner().run(unittest.TestLoader().loadTestsFromName("femtest.t
 # open files from FEM test suite source code
 # be careful on updating these files, they contain the original results!
 # TODO update files, because some of them have non-existing FEM object classes
-app_home = FreeCAD.ConfigGet("AppHomePath")
-doc = FreeCAD.open(app_home + 'Mod/Fem/femtest/testfiles/ccx/cube.FCStd')
-doc = FreeCAD.open(app_home + 'Mod/Fem/femtest/testfiles/ccx/cube_frequency.FCStd')
-doc = FreeCAD.open(app_home + 'Mod/Fem/femtest/testfiles/ccx/cube_static.FCStd')
-doc = FreeCAD.open(app_home + 'Mod/Fem/femtest/testfiles/ccx/Flow1D_thermomech.FCStd')
-doc = FreeCAD.open(app_home + 'Mod/Fem/femtest/testfiles/ccx/multimat.FCStd')
-doc = FreeCAD.open(app_home + 'Mod/Fem/femtest/testfiles/ccx/spine_thermomech.FCStd')
+doc = FreeCAD.open(FreeCAD.ConfigGet("AppHomePath") + 'Mod/Fem/femtest/data/ccx/cube.FCStd')
+doc = FreeCAD.open(FreeCAD.ConfigGet("AppHomePath") + 'Mod/Fem/femtest/data/ccx/cube_frequency.FCStd')
+doc = FreeCAD.open(FreeCAD.ConfigGet("AppHomePath") + 'Mod/Fem/femtest/data/ccx/cube_static.FCStd')
+doc = FreeCAD.open(FreeCAD.ConfigGet("AppHomePath") + 'Mod/Fem/femtest/data/ccx/Flow1D_thermomech.FCStd')
+doc = FreeCAD.open(FreeCAD.ConfigGet("AppHomePath") + 'Mod/Fem/femtest/data/ccx/multimat.FCStd')
+doc = FreeCAD.open(FreeCAD.ConfigGet("AppHomePath") + 'Mod/Fem/femtest/data/ccx/spine_thermomech.FCStd')
 
 # open files generated from test suite
 import femtest.utilstest as ut

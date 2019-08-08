@@ -15,7 +15,7 @@ class SolverTest(AppTestSupport.BaseTest):
 
     TEST_DIR = os.path.join(
         FreeCAD.getHomePath(),
-        "Mod/Fem/femtest/testfiles/problems")
+        "Mod/Fem/femtest/data/problems")
     EXTENSION = ".FCStd"
 
     def setUp(self):
