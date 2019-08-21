@@ -462,6 +462,8 @@ Evolumes
 U
 *EL FILE
 S, E
+** outputs --> dat file
+** reaction forces for Constraint fixed
 
 ***********************************************************
 ** written by write_step_end function
