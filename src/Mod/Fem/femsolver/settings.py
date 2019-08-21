@@ -137,12 +137,11 @@ def get_dir_setting():
     :term:`General/UseBesideDirectory` and :term:`General/UseCustomDirectory`.
     """
     param_group = FreeCAD.ParamGet(_GENERAL_PARAM)
-    if param_group.GetBool("UseTempDirectory"):
-        return DirSetting.TEMPORARY
-    elif param_group.GetBool("UseBesideDirectory"):
+    if param_group.GetBool("UseBesideDirectory"):
         return DirSetting.BESIDE
     elif param_group.GetBool("UseCustomDirectory"):
         return DirSetting.CUSTOM
+    return DirSetting.TEMPORARY
 
 
 class _SolverDlg(object):
