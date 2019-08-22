@@ -1,3 +1,38 @@
+# ***************************************************************************
+# *   Copyright (c) 2016 Markus Hovorka <m.hovorka@live.de>                 *
+# *                                                                         *
+# *   This program is free software; you can redistribute it and/or modify  *
+# *   it under the terms of the GNU Lesser General Public License (LGPL)    *
+# *   as published by the Free Software Foundation; either version 2 of     *
+# *   the License, or (at your option) any later version.                   *
+# *   for detail see the LICENCE text file.                                 *
+# *                                                                         *
+# *   This program is distributed in the hope that it will be useful,       *
+# *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+# *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+# *   GNU Library General Public License for more details.                  *
+# *                                                                         *
+# *   You should have received a copy of the GNU Library General Public     *
+# *   License along with this program; if not, write to the Free Software   *
+# *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  *
+# *   USA                                                                   *
+# *                                                                         *
+# ***************************************************************************
+""" Test results of textbook problems.
+
+Run complete simulations of textbook problems and check the results. Most of
+the work is done in the support module :py:mod:`femtest.support_solver`. There
+is one test class per textbook example. Each test method inside the test class
+executes the same problem with a different solver. The calculation for the
+analytic resulsts are written down in the test class docstring.
+"""
+
+
+__title__ = "Test module for solver"
+__author__ = "Markus Hovorka"
+__url__ = "http://www.freecadweb.org"
+
+
 import unittest
 
 import FreeCAD
