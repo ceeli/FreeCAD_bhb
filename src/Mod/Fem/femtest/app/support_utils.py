@@ -114,7 +114,7 @@ def get_fem_test_defs(
                     'femtest.{}.{}.{}'.format(module_name, class_name, ln)
                 )
         tfile.close()
-    print('')
+    fcc_print('')
     for m in collected_test_methods:
         run_outside_fc = './bin/FreeCADCmd --run-test "{}"'.format(m)
         run_inside_fc = (
@@ -122,10 +122,10 @@ def get_fem_test_defs(
             .format(m)
         )
         if inout == 'in':
-            print('\nimport unittest')
-            print(run_inside_fc)
+            fcc_print('\nimport unittest')
+            fcc_print(run_inside_fc)
         else:
-            print(run_outside_fc)
+            fcc_print(run_outside_fc)
 
 
 def compare_inp_files(

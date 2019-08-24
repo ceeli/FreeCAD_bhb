@@ -32,6 +32,7 @@ import subprocess
 import tempfile
 
 from FreeCAD import Units
+from FreeCAD import Console
 import Fem
 import femtools.femutils as femutils
 import femmesh.gmshtools as gmshtools
@@ -124,7 +125,8 @@ class Writer(object):
         groups.extend(self._builder.getBoundaryNames())
         self._exportToUnv(groups, mesh, unvPath)
         if self.testmode:
-            print("We are in testmode ElmerGrid may not be installed!")
+            Console.PrintMessage(
+                    "We are in testmode ElmerGrid may not be installed!")
         else:
             binary = settings.get_binary("ElmerGrid")
             if binary is None:
@@ -164,9 +166,12 @@ class Writer(object):
         tools.write_part_file()
         tools.write_geo()
         if self.testmode:
-            print("We are in testmode, GMSH may not be installed!")
+            Console.PrintMessage(
+                    "We are in testmode, GMSH may not be installed!")
             import shutil
-            shutil.copyfile(geoPath, os.path.join(self.directory, "group_mesh.geo"))
+            shutil.copyfile(
+                    geoPath,
+                    os.path.join(self.directory, "group_mesh.geo"))
         else:
             tools.run_gmsh_with_geo()
 

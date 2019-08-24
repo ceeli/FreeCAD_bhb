@@ -31,6 +31,7 @@ __url__ = "http://www.freecadweb.org"
 #  \brief FreeCAD Calculix FRD Reader for FEM workbench
 
 import FreeCAD
+from FreeCAD import Console
 import os
 
 
@@ -88,7 +89,7 @@ def importFrd(
         nodenumbers_for_compacted_mesh = []
 
         number_of_increments = len(m['Results'])
-        FreeCAD.Console.PrintLog(
+        Console.PrintLog(
             'Increments: ' + str(number_of_increments) + '\n'
         )
         if len(m['Results']) > 0:
@@ -175,7 +176,7 @@ def importFrd(
                 "or if CalculiX returned no results because "
                 "of nonpositive jacobian determinant in at least one element.\n"
             )
-            FreeCAD.Console.PrintMessage(error_message)
+            Console.PrintMessage(error_message)
             if analysis:
                 analysis_object.addObject(result_mesh_object)
 
@@ -186,7 +187,7 @@ def importFrd(
             FreeCAD.ActiveDocument.recompute()
 
     else:
-        FreeCAD.Console.PrintError(
+        Console.PrintError(
             'Problem on frd file import. No nodes found in frd file.\n'
         )
     return res_obj
@@ -197,21 +198,21 @@ def importFrd(
 def read_frd_result(
     frd_input
 ):
-    FreeCAD.Console.PrintMessage(
+    Console.PrintMessage(
         'Read ccx results from frd file: {}\n'
         .format(frd_input)
     )
     inout_nodes = []
     inout_nodes_file = frd_input.rsplit('.', 1)[0] + '_inout_nodes.txt'
     if os.path.exists(inout_nodes_file):
-        print('Read special 1DFlow nodes data form: ' + inout_nodes_file)
+        Console.PrintLog('Read special 1DFlow nodes data form: ' + inout_nodes_file)
         f = pyopen(inout_nodes_file, "r")
         lines = f.readlines()
         for line in lines:
             a = line.split(',')
             inout_nodes.append(a)
         f.close()
-        print(inout_nodes)
+        Console.PrintLog(inout_nodes)
     frd_file = pyopen(frd_input, "r")
     nodes = {}
     elements_hexa8 = {}
@@ -368,7 +369,6 @@ def read_frd_result(
                     nd8, nd5, nd6, nd7, nd4, nd1, nd2, nd3, nd20, nd17,
                     nd18, nd19, nd12, nd9, nd10, nd11, nd16, nd13, nd14, nd15
                 )
-                # print(elements_hexa20[elem])
             elif elemType == 5 and input_continues is False:
                 # first line
                 # C3D15 Calculix --> penta15 FreeCAD
@@ -650,16 +650,6 @@ def read_frd_result(
                 mode_networkpressure = {}
                 node_element_section = False
 
-            '''
-            print('---- End of Section --> Mode_Results may be changed ----')
-            for key in sorted(mode_results.keys()):
-                if key is 'number' or key is 'time':
-                    print(key + ' --> ' + str(mode_results[key]))
-                else:
-                    print(key + ' --> ' + str(len(mode_results[key])))
-            print('----Mode_Results----\n')
-            '''
-
         # Check if we found the end of frd data
         if line[1:5] == "9999":
             end_of_frd_data_found = True
@@ -667,17 +657,6 @@ def read_frd_result(
         if (mode_eigen_changed or mode_time_changed or end_of_frd_data_found) \
                 and end_of_section_found \
                 and not node_element_section:
-
-            '''
-            print('\n\n----Append mode_results to results')
-            print(line)
-            for key in sorted(mode_results.keys()):
-                if key is 'number' or key is 'time':
-                    print(key + ' --> ' + str(mode_results[key]))
-                else:
-                    print(key + ' --> ' + str(len(mode_results[key])))
-            print('----Append Mode_Results----\n')
-            '''
 
             # append mode_results to results and reset mode_result
             results.append(mode_results)
@@ -705,23 +684,14 @@ def read_frd_result(
     # close frd file if loop over all lines is finished
     frd_file.close()
 
-    '''
-    # debug prints and checks with the read data
-    print('\n\n----RESULTS values begin----')
-    print(len(results))
-    # print('\n')
-    # print(results)
-    print('----RESULTS values end----\n\n')
-    '''
-
     if not inout_nodes:
         if results:
             if 'mflow' in results[0] or 'npressure' in results[0]:
-                FreeCAD.Console.PrintError(
+                Console.PrintError(
                     'We have mflow or npressure, but no inout_nodes file.\n'
                 )
     if not nodes:
-        FreeCAD.Console.PrintError('FEM: No nodes found in Frd file.\n')
+        Console.PrintError('FEM: No nodes found in Frd file.\n')
 
     return {
         'Nodes': nodes,

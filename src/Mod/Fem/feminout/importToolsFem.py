@@ -29,6 +29,7 @@ __url__ = "http://www.freecadweb.org"
 #  \brief FreeCAD FEM import tools
 
 import FreeCAD
+from FreeCAD import Console
 
 
 def get_FemMeshObjectMeshGroups(
@@ -69,7 +70,7 @@ def get_FemMeshObjectOrder(
         else:
             presumable_order = [el - 1 for el in edges_length_set]
     else:
-        print("Found no edges in mesh: Element order determination does not work without them.")
+        Console.PrintError("Found no edges in mesh: Element order determination does not work without them.")
 
     return presumable_order
 
@@ -137,7 +138,7 @@ def make_femmesh(
     mesh = Fem.FemMesh()
     m = mesh_data
     if ('Nodes' in m) and (len(m['Nodes']) > 0):
-        FreeCAD.Console.PrintLog("Found: nodes\n")
+        Console.PrintLog("Found: nodes\n")
         if (
             ('Seg2Elem' in m)
             or ('Seg3Elem' in m)
@@ -154,7 +155,7 @@ def make_femmesh(
         ):
 
             nds = m['Nodes']
-            FreeCAD.Console.PrintLog("Found: elements\n")
+            Console.PrintLog("Found: elements\n")
             for i in nds:
                 n = nds[i]
                 mesh.addNode(n[0], n[1], n[2], i)
@@ -210,7 +211,7 @@ def make_femmesh(
             for i in elms_seg3:
                 e = elms_seg3[i]
                 mesh.addEdge([e[0], e[1], e[2]], i)
-            FreeCAD.Console.PrintLog(
+            Console.PrintLog(
                 "imported mesh: {} nodes, {} HEXA8, {} PENTA6, {} TETRA4, {} TETRA10, {} PENTA15"
                 .format(
                     len(nds),
@@ -221,7 +222,7 @@ def make_femmesh(
                     len(elms_penta15)
                 )
             )
-            FreeCAD.Console.PrintLog(
+            Console.PrintLog(
                 "imported mesh: {} HEXA20, {} TRIA3, {} TRIA6, {} QUAD4, {} QUAD8, {} SEG2, {} SEG3"
                 .format(
                     len(elms_hexa20),
@@ -234,9 +235,9 @@ def make_femmesh(
                 )
             )
         else:
-            FreeCAD.Console.PrintError("No Elements found!\n")
+            Console.PrintError("No Elements found!\n")
     else:
-        FreeCAD.Console.PrintError("No Nodes found!\n")
+        Console.PrintError("No Nodes found!\n")
     return mesh
 
 
@@ -410,7 +411,7 @@ def fill_femresult_mechanical(
             if len(Peeq) > 0:
                 if len(Peeq.values()) != len(disp.values()):
                     # how is this possible? An example is needed!
-                    FreeCAD.Console.PrintError('PEEQ seams to have exptra nodes.\n')
+                    Console.PrintError('PEEQ seams to have exptra nodes.\n')
                     Pe = []
                     Pe_extra_nodes = list(Peeq.values())
                     nodes = len(disp.values())
@@ -437,7 +438,7 @@ def fill_femresult_mechanical(
                 nodes = len(disp.values())
                 for i in range(nodes):
                     # how is this possible? An example is needed!
-                    FreeCAD.Console.PrintError('Temperature seams to have exptra nodes.\n')
+                    Console.PrintError('Temperature seams to have exptra nodes.\n')
                     Temp_value = Temp_extra_nodes[i]
                     Temp.append(Temp_value)
                 res_obj.Temperature = list(map((lambda x: x), Temp))

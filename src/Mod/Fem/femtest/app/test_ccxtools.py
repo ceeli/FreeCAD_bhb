@@ -1252,7 +1252,7 @@ def create_test_results():
     fea = ccxtools.FemToolsCcx()
     fea.update_objects()
 
-    print("create static result files")
+    fcc_print("create static result files")
     fea.reset_all()
     fea.run()
     fea.load_results()
@@ -1287,7 +1287,7 @@ def create_test_results():
     fea = ccxtools.FemToolsCcx()
     fea.update_objects()
 
-    print("create frequency result files")
+    fcc_print("create frequency result files")
     fea.reset_all()
     fea.solver.EigenmodesCount = 1  # we should only have one result object
     fea.run()
@@ -1316,7 +1316,7 @@ def create_test_results():
     shutil.copyfile(dat_result_file, dat_frequency_test_result_file)
 
     # thermomech
-    print("create thermomech result files")
+    fcc_print("create thermomech result files")
     FreeCAD.open(thermomech_analysis_dir + 'spine_thermomech.FCStd')
     FemGui.setActiveAnalysis(FreeCAD.ActiveDocument.Analysis)
     fea = ccxtools.FemToolsCcx()
@@ -1347,10 +1347,10 @@ def create_test_results():
     dat_thermomech_test_result_file = thermomech_analysis_dir + 'spine_thermomech.dat'
     shutil.copyfile(frd_result_file, frd_thermomech_test_result_file)
     shutil.copyfile(dat_result_file, dat_thermomech_test_result_file)
-    print('Results copied to the appropriate FEM test dirs in: ' + temp_dir)
+    fcc_print('Results copied to the appropriate FEM test dirs in: ' + temp_dir)
 
     # Flow1D
-    print("create Flow1D result files")
+    fcc_print("create Flow1D result files")
     FreeCAD.open(Flow1D_thermomech_analysis_dir + 'Flow1D_thermomech.FCStd')
     FemGui.setActiveAnalysis(FreeCAD.ActiveDocument.Analysis)
     fea = ccxtools.FemToolsCcx()
@@ -1387,7 +1387,7 @@ def create_test_results():
     )
     shutil.copyfile(frd_result_file, frd_Flow1D_thermomech_test_result_file)
     shutil.copyfile(dat_result_file, dat_Flow1D_thermomech_test_result_file)
-    print('Flow1D thermomech results copied to the appropriate FEM test dirs in: ' + temp_dir)
+    fcc_print('Flow1D thermomech results copied to the appropriate FEM test dirs in: ' + temp_dir)
 
 
 '''

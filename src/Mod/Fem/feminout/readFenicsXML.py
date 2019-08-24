@@ -19,7 +19,6 @@
 # *   USA                                                                   *
 # *                                                                         *
 # ***************************************************************************
-from __future__ import print_function
 
 __title__ = "FreeCAD Fenics XML mesh reader"
 __author__ = "Johannes Hartung"
@@ -31,6 +30,7 @@ __url__ = "http://www.freecadweb.org"
 
 
 import FreeCAD
+from FreeCAD import Console
 from xml.etree import ElementTree as ET
 import itertools
 
@@ -58,8 +58,8 @@ def read_fenics_mesh_xml(xmlfilename):
 
         vertex_size = 0
 
-        print("Mesh dimension: %d" % (dim,))
-        print("Mesh cell type: %s" % (cell_type,))
+        Console.PrintLog("Mesh dimension: %d" % (dim,))
+        Console.PrintLog("Mesh cell type: %s" % (cell_type,))
 
         # every cell type contains a dict with key=dimension and value=number
 
@@ -77,10 +77,10 @@ def read_fenics_mesh_xml(xmlfilename):
         cell_dict = {}
 
         if find_vertices is None:
-            print("No vertices found!")
+            Console.PrintWarning("No vertices found!")
         else:
             vertex_size = int(find_vertices.attrib.get("size"))
-            print("Reading %d vertices" % (vertex_size,))
+            Console.PrintLog("Reading %d vertices" % (vertex_size,))
 
             for vertex in find_vertices:
                 ind = int(vertex.get("index"))
@@ -92,19 +92,18 @@ def read_fenics_mesh_xml(xmlfilename):
 
                     nodes_dict[ind + 1] = FreeCAD.Vector(node_x, node_y, node_z)
                     # increase node index by one, since fenics starts at 0, FreeCAD at 1
-                    # print("%d %f %f %f" % (ind, node_x, node_y, node_z))
                 else:
-                    print("found strange vertex tag: %s" % (vertex.tag,))
+                    Console.PrintWarning("found strange vertex tag: %s" % (vertex.tag,))
 
         if find_cells is None:
-            print("No cells found!")
+            Console.PrintWarning("No cells found!")
         else:
-            print("Reading %d cells" % (int(find_cells.attrib.get("size")),))
+            Console.PrintLog("Reading %d cells" % (int(find_cells.attrib.get("size")),))
             for cell in find_cells:
                 ind = int(cell.get("index"))
 
                 if cell.tag.lower() != cell_type.lower():
-                    print(
+                    Console.PrintWarning(
                         "Strange mismatch between cell type {} and cell tag {}"
                         .format(cell_type, cell.tag.lower())
                     )
@@ -119,7 +118,6 @@ def read_fenics_mesh_xml(xmlfilename):
                 cell_dict[ind + 1] = vtupel
 
                 # valtupel = tuple([ind] + list(vtupel))
-                # print(("%d " + ("%d "*len(vtupel))) % valtupel)
 
         return (nodes_dict, cell_dict, cell_type, dim)
 
@@ -203,18 +201,13 @@ def read_fenics_mesh_xml(xmlfilename):
                         element_counter[ld])
 
         length_counter = len(nodes)  # maintain distinct counting values
-        # print("nodes")
-        # print("len & len counter", length_counter)
         for (key, val_dict) in list(element_dict.items()):
             # to ensure distinct indices for FreeCAD
-            # print('key: ', key)
             for (vkey, it) in list(val_dict.items()):
                 val_dict[vkey] = it + length_counter  # maintain distinct element numbers
             len_val_dict = len(val_dict)
             if len_val_dict > 0:
                 length_counter += len_val_dict + 1  # only if preceding list is not empty
-            # print('len: ', len_val_dict)
-            # print('lencounter: ', length_counter)
             # inverse of the dict (dict[key] = val -> dict[val] = key)
             element_dict[key] = invertdict(val_dict)
 
@@ -232,23 +225,23 @@ def read_fenics_mesh_xml(xmlfilename):
     root = tree.getroot()
 
     if root.tag.lower() != "dolfin":
-        print("Strange root tag, should be dolfin!")
+        Console.PrintWarning("Strange root tag, should be dolfin!")
 
     find_mesh = root.find("mesh")
     if find_mesh is not None:  # these are consistency checks of the XML structure
-        print("Mesh found")
+        Console.PrintMessage("Mesh found")
         (nodes, cells_dict, cell_type, dim) = read_mesh_block(find_mesh)
         element_dict = generate_lower_dimensional_structures(nodes, cells_dict, cell_type, dim)
-        print("Show min max element dict")
+        Console.PrintMessage("Show min max element dict")
         for (elm, numbers) in list(element_dict.items()):
             lst = sorted(list(numbers.items()), key=lambda x: x[0])
             if lst != []:
-                print(elm, " min: ", lst[0], " max: ", lst[-1])
+                Console.PrintWarning(elm, " min: ", lst[0], " max: ", lst[-1])
     else:
-        print("No mesh found")
+        Console.PrintError("No mesh found")
 
     if root.find("data") is not None:
-        print("Internal mesh data found")
+        Console.PrintLog("Internal mesh data found")
 
     return {
         'Nodes': nodes,
