@@ -37,6 +37,18 @@ from femtest.app.test_result import TestResult as FemTest08
 from femtest.app.test_ccxtools import TestCcxTools as FemTest09
 from femtest.app.test_solverframework import TestSolverFrameWork as FemTest10
 
+from femtest.app.test_tools import TestCreateObject
+from femtest.app.test_tools import TestFindAnalysisOfMember
+from femtest.app.test_tools import TestGetMember
+from femtest.app.test_tools import TestIsDerivedFrom
+from femtest.app.test_tools import TestGetSingleMember
+from femtest.app.test_tools import TestGetSeveralMember
+from femtest.app.test_tools import TestGetMeshToSolve
+from femtest.app.test_tools import TestTypeOfObj
+from femtest.app.test_tools import TestIsOfType
+from femtest.app.test_tools import TestGetBoundBoxOfAllDocumentShapes
+from femtest.app.test_tools import TestGetRefshapeType
+
 # dummy usage to get flake8 and lgtm quiet
 False if FemTest01.__name__ else True
 False if FemTest02.__name__ else True
@@ -48,7 +60,6 @@ False if FemTest07.__name__ else True
 False if FemTest08.__name__ else True
 False if FemTest09.__name__ else True
 False if FemTest10.__name__ else True
-
 
 # For more information on how to run a specific test class or a test method see
 # file src/Mod/Test/__init__

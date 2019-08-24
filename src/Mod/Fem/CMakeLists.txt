@@ -154,6 +154,7 @@ SET(FemTestsApp_SRCS
     femtest/app/test_object.py
     femtest/app/test_result.py
     femtest/app/test_solverframework.py
+    femtest/app/test_tools.py
 )
 
 SET(FemTestsGui_SRCS
