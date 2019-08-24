@@ -140,10 +140,16 @@ SET(FemTests_SRCS
 
     femtest/FemTestSupport.py
     femtest/testtools.py
+    femtest/testproblems.py
 )
 
 SET(FemTestsFiles_SRCS
     femtest/testfiles/__init__.py
+)
+
+SET(FemTestsProblems_SRCS
+    femtest/testfiles/problems/cantilever_end_load.FCStd
+    femtest/testfiles/problems/cantilever_uniform_load.FCStd
 )
 
 SET(FemTestsCcx_SRCS
@@ -239,6 +245,7 @@ SET(FemAllScripts
     ${FemSolverZ88_SRCS}
     ${FemTests_SRCS}
     ${FemTestsFiles_SRCS}
+    ${FemTestsProblems_SRCS}
     ${FemTestsCcx_SRCS}
     ${FemTestsElmer_SRCS}
     ${FemTestsMesh_SRCS}
@@ -270,6 +277,7 @@ INSTALL(FILES ${FemSolverFenics_SRCS} DESTINATION Mod/Fem/femsolver/fenics)
 INSTALL(FILES ${FemSolverZ88_SRCS} DESTINATION Mod/Fem/femsolver/z88)
 INSTALL(FILES ${FemTests_SRCS} DESTINATION Mod/Fem/femtest)
 INSTALL(FILES ${FemTestsFiles_SRCS} DESTINATION Mod/Fem/femtest/testfiles)
+INSTALL(FILES ${FemTestsProblems_SRCS} DESTINATION Mod/Fem/femtest/testfiles/problems)
 INSTALL(FILES ${FemTestsCcx_SRCS} DESTINATION Mod/Fem/femtest/testfiles/ccx)
 INSTALL(FILES ${FemTestsElmer_SRCS} DESTINATION Mod/Fem/femtest/testfiles/elmer)
 INSTALL(FILES ${FemTestsMesh_SRCS} DESTINATION Mod/Fem/femtest/testfiles/mesh)
