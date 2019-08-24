@@ -137,6 +137,8 @@ SET(FemTests_SRCS
     femtest/testresult.py
     femtest/testsolverframework.py
     femtest/utilstest.py
+
+    femtest/testtools.py
 )
 
 SET(FemTestsFiles_SRCS
