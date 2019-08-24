@@ -160,6 +160,7 @@ SET(FemTestsApp_SRCS
 
 SET(FemTestsGui_SRCS
     femtest/gui/__init__.py
+    femtest/gui/test_gmsh.py
 )
 
 SET(FemTestsFiles_SRCS
