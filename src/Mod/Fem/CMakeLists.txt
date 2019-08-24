@@ -138,6 +138,7 @@ SET(FemTests_SRCS
     femtest/testsolverframework.py
     femtest/utilstest.py
 
+    femtest/FemTestSupport.py
     femtest/testtools.py
 )
 
