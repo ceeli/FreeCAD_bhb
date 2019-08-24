@@ -141,6 +141,7 @@ SET(FemTests_SRCS
     femtest/FemTestSupport.py
     femtest/testtools.py
     femtest/testproblems.py
+    femtest/testgmshgui.py
 )
 
 SET(FemTestsFiles_SRCS
