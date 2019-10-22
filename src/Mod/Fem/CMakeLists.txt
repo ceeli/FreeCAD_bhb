@@ -155,6 +155,10 @@ SET(FemTestsApp_SRCS
     femtest/app/test_solverframework.py
 )
 
+SET(FemTestsGui_SRCS
+    femtest/gui/__init__.py
+)
+
 SET(FemTestsFiles_SRCS
     femtest/data/__init__.py
 )
@@ -248,6 +252,7 @@ SET(FemAllScripts
     ${FemSolverZ88_SRCS}
     ${FemTests_SRCS}
     ${FemTestsApp_SRCS}
+    ${FemTestsGui_SRCS}
     ${FemTestsFiles_SRCS}
     ${FemTestsCcx_SRCS}
     ${FemTestsElmer_SRCS}
@@ -280,6 +285,7 @@ INSTALL(FILES ${FemSolverFenics_SRCS} DESTINATION Mod/Fem/femsolver/fenics)
 INSTALL(FILES ${FemSolverZ88_SRCS} DESTINATION Mod/Fem/femsolver/z88)
 INSTALL(FILES ${FemTests_SRCS} DESTINATION Mod/Fem/femtest)
 INSTALL(FILES ${FemTestsApp_SRCS} DESTINATION Mod/Fem/femtest/app)
+INSTALL(FILES ${FemTestsGui_SRCS} DESTINATION Mod/Fem/femtest/gui)
 INSTALL(FILES ${FemTestsFiles_SRCS} DESTINATION Mod/Fem/femtest/data)
 INSTALL(FILES ${FemTestsCcx_SRCS} DESTINATION Mod/Fem/femtest/data/ccx)
 INSTALL(FILES ${FemTestsElmer_SRCS} DESTINATION Mod/Fem/femtest/data/elmer)
